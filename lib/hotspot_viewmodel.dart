@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'hotspot_model.dart';
 import 'hotspot_repository.dart';
+import 'dart:math';
+import 'dart:ui';
 
 class HotspotViewModel extends ChangeNotifier {
   final HotspotRepository repository;
@@ -21,7 +23,10 @@ class HotspotViewModel extends ChangeNotifier {
   RangeValues _scoreRange = const RangeValues(0, 10);
   RangeValues _ratingRange = const RangeValues(0, 5);
 
-  HotspotResponse? get hotspotResponse =>  _hotspotResponse;
+  Function(SuggestedHotspot)? _onSuggestedTap;
+  Function(ExistingCharger)? _onExistingTap;
+
+  HotspotResponse? get hotspotResponse => _hotspotResponse;
 
   Set<Marker> get markers => _markers;
   Set<Circle> get circles => _circles;
@@ -33,25 +38,125 @@ class HotspotViewModel extends ChangeNotifier {
   RangeValues get scoreRange => _scoreRange;
   RangeValues get ratingRange => _ratingRange;
 
+  Future<BitmapDescriptor> getCustomMarker(double score,
+      {bool isCharger = false}) async {
+    Color primaryColor;
+    if (isCharger) {
+      primaryColor = const Color.fromARGB(255, 71, 45, 202); // Fixed color for all chargers
+    } else if (score >= 7) {
+      primaryColor = const Color.fromARGB(255, 65, 232, 70);
+    } else if (score >= 4) {
+      primaryColor = const Color.fromARGB(255, 255, 196, 0);
+    } else {
+      primaryColor = const Color.fromARGB(255, 226, 76, 65);
+    }
+
+    final double width = 150;
+    final double height = 150;
+    final double strokeWidth = 25.0;
+    final size = 100;
+
+    final pictureRecorder = PictureRecorder();
+    final canvas = Canvas(pictureRecorder);
+
+    final double borderWidth = size * 0.1;
+    final borderPaint = Paint()..color = Colors.white;
+    final circlePaint = Paint()..color = primaryColor;
+
+    Paint paint = Paint()
+      ..color = primaryColor.withOpacity(0.18)
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    Offset center = Offset(width / 2, height / 2);
+    double radius = min(width / 2, height / 2) - (strokeWidth / 2);
+
+    canvas.drawCircle(
+      center,
+      size / 2 - borderWidth,
+      circlePaint,
+    );
+
+    canvas.drawCircle(center, radius, paint);
+
+    if (isCharger) {
+      // Draw a charge icon (lightning bolt)
+      final iconPainter = TextPainter(
+        text: const TextSpan(
+          text: '⚡', // Lightning bolt symbol
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 40,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      );
+      iconPainter.layout();
+      final iconOffset = Offset(
+        center.dx - iconPainter.width / 2,
+        center.dy - iconPainter.height / 2,
+      );
+      iconPainter.paint(canvas, iconOffset);
+    } else {
+      // Draw score text for hotspots
+      final text = score.toStringAsFixed(1);
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: text,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 30,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      );
+      textPainter.layout();
+      final textOffset = Offset(
+        center.dx - textPainter.width / 2,
+        center.dy - textPainter.height / 2,
+      );
+      textPainter.paint(canvas, textOffset);
+    }
+
+    final img = await pictureRecorder
+        .endRecording()
+        .toImage(width.toInt(), height.toInt());
+    final byteData = await img.toByteData(format: ImageByteFormat.png);
+    final BitmapDescriptor bitmap =
+        BitmapDescriptor.fromBytes(byteData!.buffer.asUint8List());
+    return bitmap;
+  }
+
+  void setTapCallbacks({
+    Function(SuggestedHotspot)? onSuggestedTap,
+    Function(ExistingCharger)? onExistingTap,
+  }) {
+    _onSuggestedTap = onSuggestedTap;
+    _onExistingTap = onExistingTap;
+  }
+
   void onMapTap(LatLng position) {
     _selectedLocation = position;
     _markers.removeWhere((marker) => marker.markerId.value == 'selected');
-    _circles.clear(); // Clear previous circle
+    _circles.clear();
     _markers.add(
       Marker(
         markerId: const MarkerId('selected'),
         position: position,
         infoWindow: const InfoWindow(title: 'Selected Location'),
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
       ),
     );
-    _updateRadiusCircle(); // Add new circle
+    _updateRadiusCircle();
     notifyListeners();
   }
 
   void updateRadius(double value) {
     _radius = value;
-    _updateRadiusCircle(); // Update circle when radius changes
+    _updateRadiusCircle();
     notifyListeners();
   }
 
@@ -60,13 +165,12 @@ class HotspotViewModel extends ChangeNotifier {
     _circles.clear();
     _selectedLocation = null;
     _radius = 5.0;
-    _hotspotResponse = null; // Clear fetched data as well
+    _hotspotResponse = null;
     notifyListeners();
   }
 
   void clearSelectionForAdjustRadius() {
-    // _markers.clear();
-    _markers.removeWhere((marker) => marker.markerId.value == 'selected'); 
+    _markers.removeWhere((marker) => marker.markerId.value == 'selected');
     _circles.clear();
     _selectedLocation = null;
     _radius = 5.0;
@@ -74,13 +178,13 @@ class HotspotViewModel extends ChangeNotifier {
   }
 
   void _updateRadiusCircle() {
-    if (_selectedLocation == null) return; // Don’t add circle if no location
-    _circles.clear(); // Clear previous circle
+    if (_selectedLocation == null) return;
+    _circles.clear();
     _circles.add(
       Circle(
         circleId: const CircleId('radius'),
         center: _selectedLocation!,
-        radius: _radius * 1000, // Convert km to meters
+        radius: _radius * 1000,
         fillColor: const Color.fromARGB(255, 54, 26, 237).withOpacity(0.2),
         strokeColor: const Color.fromARGB(255, 54, 26, 237),
         strokeWidth: 2,
@@ -100,56 +204,72 @@ class HotspotViewModel extends ChangeNotifier {
         _selectedLocation!.longitude,
         _radius * 1000,
       );
-      applyFilters();
-      // Re-add the selected marker and circle after fetching
+      applyFilters(
+        onSuggestedTap: _onSuggestedTap,
+        onExistingTap: _onExistingTap,
+      );
       _markers.add(
         Marker(
           markerId: const MarkerId('selected'),
           position: _selectedLocation!,
           infoWindow: const InfoWindow(title: 'Selected Location'),
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueCyan),
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
         ),
       );
-      _updateRadiusCircle(); // Ensure circle is added back
-      // Keep _selectedLocation intact for radius adjustments
+      _updateRadiusCircle();
     } catch (e) {
       print('Error fetching hotspots: $e');
     }
-
+    await Future.delayed(const Duration(seconds: 1));
     _isLoading = false;
+    // clearSelectionForAdjustRadius();
     notifyListeners();
+    
   }
 
   void applyFilters({
     Function(SuggestedHotspot)? onSuggestedTap,
     Function(ExistingCharger)? onExistingTap,
-  }) {
+  }) async {
     if (_hotspotResponse == null) return;
+    final newMarkers = <Marker>{};
 
-    // Preserve the 'selected' marker
-    _markers.removeWhere((marker) => marker.markerId.value != 'selected');
-    // Don’t clear _circles here; let _updateRadiusCircle manage it
+    Marker? selectedMarker;
+    try {
+      selectedMarker = _markers.firstWhere(
+        (marker) => marker.markerId.value == 'selected',
+      );
+    } catch (e) {
+      selectedMarker = null;
+    }
+    if (selectedMarker != null) {
+      newMarkers.add(selectedMarker);
+    }
 
     if (_showSuggested) {
       for (var hotspot in _hotspotResponse!.suggested) {
+        final score = hotspot.totalWeight ?? 0;
+        final rating = hotspot.rating ?? 0;
         if (hotspot.lat != null &&
             hotspot.lng != null &&
-            (hotspot.totalWeight ?? 0) >= _scoreRange.start &&
-            (hotspot.totalWeight ?? 0) <= _scoreRange.end &&
-            (hotspot.rating ?? 0) >= _ratingRange.start &&
-            (hotspot.rating ?? 0) <= _ratingRange.end) {
-          _markers.add(
+            score >= _scoreRange.start &&
+            score <= _scoreRange.end &&
+            rating >= _ratingRange.start &&
+            rating <= _ratingRange.end) {
+          final BitmapDescriptor customIcon =
+              await getCustomMarker(score, isCharger: false);
+          newMarkers.add(
             Marker(
               markerId: MarkerId('suggested_${hotspot.id}'),
               position: LatLng(hotspot.lat!, hotspot.lng!),
               infoWindow: InfoWindow(
                 title: hotspot.displayName,
-                snippet: 'Score: ${hotspot.totalWeight ?? 'N/A'}, Rating: ${hotspot.rating ?? 'N/A'}',
+                snippet:
+                    'Score: ${hotspot.totalWeight ?? 'N/A'}, Rating: ${hotspot.rating ?? 'N/A'}',
               ),
-              icon: BitmapDescriptor.defaultMarkerWithHue(
-                _getMarkerColor(hotspot.totalWeight ?? 0),
-              ),
-              onTap: onSuggestedTap != null ? () => onSuggestedTap(hotspot) : null,
+              icon: customIcon,
+              onTap:
+                  onSuggestedTap != null ? () => onSuggestedTap(hotspot) : null,
             ),
           );
         }
@@ -158,11 +278,14 @@ class HotspotViewModel extends ChangeNotifier {
 
     if (_showExisting) {
       for (var charger in _hotspotResponse!.existingCharger) {
+        final rating = charger.rating ?? 0;
         if (charger.lat != null &&
             charger.lng != null &&
-            (charger.rating ?? 0) >= _ratingRange.start &&
-            (charger.rating ?? 0) <= _ratingRange.end) {
-          _markers.add(
+            rating >= _ratingRange.start &&
+            rating <= _ratingRange.end) {
+          final BitmapDescriptor customIcon =
+              await getCustomMarker(rating, isCharger: true);
+          newMarkers.add(
             Marker(
               markerId: MarkerId('existing_${charger.id}'),
               position: LatLng(charger.lat!, charger.lng!),
@@ -170,18 +293,20 @@ class HotspotViewModel extends ChangeNotifier {
                 title: charger.displayName,
                 snippet: 'Rating: ${charger.rating ?? 'N/A'}',
               ),
-              icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueViolet),
-              onTap: onExistingTap != null ? () => onExistingTap(charger) : null,
+              icon: customIcon,
+              onTap:
+                  onExistingTap != null ? () => onExistingTap(charger) : null,
             ),
           );
         }
       }
     }
-    // Re-add the radius circle if there’s a selected location
+    _markers = newMarkers;
+
     if (_selectedLocation != null) {
       _updateRadiusCircle();
     }
-    // notifyListeners();
+    notifyListeners();
   }
 
   double _getMarkerColor(double score) {
@@ -190,36 +315,54 @@ class HotspotViewModel extends ChangeNotifier {
     return BitmapDescriptor.hueRed;
   }
 
+  void setFilters({
+    required bool showSuggested,
+    required bool showExisting,
+    required RangeValues scoreRange,
+    required RangeValues ratingRange,
+  }) {
+    _showSuggested = showSuggested;
+    _showExisting = showExisting;
+    _scoreRange = scoreRange;
+    _ratingRange = ratingRange;
+    applyFilters(
+      onSuggestedTap: _onSuggestedTap,
+      onExistingTap: _onExistingTap,
+    );
+  }
+
   void toggleShowSuggested(bool value) {
     _showSuggested = value;
-    applyFilters();
+    notifyListeners();
   }
 
   void toggleShowExisting(bool value) {
     _showExisting = value;
-    applyFilters();
+    notifyListeners();
   }
 
   void updateScoreRange(RangeValues values) {
     _scoreRange = values;
-    applyFilters();
+    notifyListeners();
   }
 
   void updateRatingRange(RangeValues values) {
     _ratingRange = values;
-    applyFilters();
+    notifyListeners();
   }
 
   List<SuggestedHotspot> getSortedSuggestedHotspots() {
     if (_hotspotResponse == null) return [];
     final sortedList = List<SuggestedHotspot>.from(_hotspotResponse!.suggested);
-    sortedList.sort((a, b) => (b.totalWeight ?? 0).compareTo(a.totalWeight ?? 0));
+    sortedList
+        .sort((a, b) => (b.totalWeight ?? 0).compareTo(a.totalWeight ?? 0));
     return sortedList;
   }
 
   List<ExistingCharger> getSortedEVStations() {
     if (_hotspotResponse == null) return [];
-    final sortedList = List<ExistingCharger>.from(_hotspotResponse!.existingCharger);
+    final sortedList =
+        List<ExistingCharger>.from(_hotspotResponse!.existingCharger);
     sortedList.sort((a, b) => (b.rating ?? 0).compareTo(a.rating ?? 0));
     return sortedList;
   }
@@ -227,25 +370,28 @@ class HotspotViewModel extends ChangeNotifier {
   List<SuggestedHotspot> getFilteredSuggestedHotspots() {
     if (_hotspotResponse == null) return [];
     return getSortedSuggestedHotspots().where((hotspot) {
+      final score = hotspot.totalWeight ?? 0;
+      final rating = hotspot.rating ?? 0;
       return _showSuggested &&
-          (hotspot.totalWeight ?? 0) >= _scoreRange.start &&
-          (hotspot.totalWeight ?? 0) <= _scoreRange.end &&
-          (hotspot.rating ?? 0) >= _ratingRange.start &&
-          (hotspot.rating ?? 0) <= _ratingRange.end;
+          score >= _scoreRange.start &&
+          score <= _scoreRange.end &&
+          rating >= _ratingRange.start &&
+          rating <= _ratingRange.end;
     }).toList();
   }
 
   List<ExistingCharger> getFilteredEVStations() {
     if (_hotspotResponse == null) return [];
     return getSortedEVStations().where((charger) {
+      final rating = charger.rating ?? 0;
       return _showExisting &&
-          (charger.rating ?? 0) >= _ratingRange.start &&
-          (charger.rating ?? 0) <= _ratingRange.end;
+          rating >= _ratingRange.start &&
+          rating <= _ratingRange.end;
     }).toList();
   }
 
-  // Methods for place suggestions (from previous refactor)
-  Future<List<dynamic>> fetchPlaceSuggestions(String input, String sessionToken) async {
+  Future<List<dynamic>> fetchPlaceSuggestions(
+      String input, String sessionToken) async {
     try {
       return await repository.fetchPlaceSuggestions(input, sessionToken);
     } catch (e) {

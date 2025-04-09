@@ -9,16 +9,9 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:uuid/uuid.dart';
 import 'hotspot_viewmodel.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
-
-// Custom Theme Data
-class HotspotTheme {
-  static const Color primaryColor = Color.fromARGB(255, 81, 60, 221); // Main theme color
-  static const Color textColor = Colors.black87;
-  static const Color secondaryTextColor = Colors.black54;
-  static const Color accentColor = Colors.amber; // For ratings
-  static const Color backgroundColor = Colors.white;
-  static const Color buttonTextColor = Colors.white;
-}
+import 'main.dart';
+import 'login_screen.dart'; // Import LoginScreen for navigation
+import 'package:shared_preferences/shared_preferences.dart'; // Import SharedPreferences
 
 class HotspotMapScreen extends StatefulWidget {
   const HotspotMapScreen({super.key});
@@ -51,6 +44,11 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
     _tabController = TabController(length: 2, vsync: this);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      final viewModel = context.read<HotspotViewModel>();
+      viewModel.setTapCallbacks(
+        onSuggestedTap: (hotspot) => _showMarkerDetailsBottomSheet(hotspot: hotspot),
+        onExistingTap: (charger) => _showMarkerDetailsBottomSheet(charger: charger),
+      );
       _enable3DBuildings();
     });
   }
@@ -101,8 +99,7 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
   Future<void> _fetchPlaceSuggestions(String input) async {
     try {
       final viewModel = context.read<HotspotViewModel>();
-      final suggestions =
-          await viewModel.fetchPlaceSuggestions(input, _sessionToken);
+      final suggestions = await viewModel.fetchPlaceSuggestions(input, _sessionToken);
       setState(() {
         _placeSuggestions = suggestions;
       });
@@ -134,210 +131,201 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
 
   void _toggleMapType() {
     setState(() {
-      _mapType =
-          _mapType == MapType.normal ? MapType.satellite : MapType.normal;
+      _mapType = _mapType == MapType.normal ? MapType.hybrid : MapType.normal;
     });
   }
 
-void _showSuggestedListDialog(HotspotViewModel viewModel) {
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (context) {
-      return DraggableScrollableSheet(
-        initialChildSize: 0.5,
-        minChildSize: 0.3,
-        maxChildSize: 0.9,
-        builder: (context, scrollController) {
-          return Container(
-            decoration: const BoxDecoration(
-              color: HotspotTheme.backgroundColor,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            child: Column(
-              children: [
-                Container(
-                  color: HotspotTheme.primaryColor,
-                  child: TabBar(
-                    controller: _tabController,
-                    labelColor: HotspotTheme.buttonTextColor,
-                    unselectedLabelColor:
-                        HotspotTheme.buttonTextColor.withOpacity(0.7),
-                    indicatorColor: HotspotTheme.buttonTextColor,
-                    tabs: [
-                      Tab(
-                        text:
-                            'Hotspots (${viewModel.getFilteredSuggestedHotspots().length})',
-                      ),
-                      Tab(
-                        text:
-                            'EV Stations (${viewModel.getFilteredEVStations().length})',
-                      ),
-                    ],
+  void _showSuggestedListDialog(HotspotViewModel viewModel) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.5,
+          minChildSize: 0.3,
+          maxChildSize: 0.9,
+          builder: (context, scrollController) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: HotspotTheme.textColor,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    color: HotspotTheme.primaryColor,
+                    child: TabBar(
+                      controller: _tabController,
+                      labelColor: HotspotTheme.buttonTextColor,
+                      unselectedLabelColor: HotspotTheme.buttonTextColor.withOpacity(0.7),
+                      indicatorColor: HotspotTheme.buttonTextColor,
+                      tabs: [
+                        Tab(
+                          text: 'Hotspots (${viewModel.getFilteredSuggestedHotspots().length})',
+                        ),
+                        Tab(
+                          text: 'EV Stations (${viewModel.getFilteredEVStations().length})',
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: [
-                      ListView.builder(
-                        controller: scrollController,
-                        itemCount: viewModel.getFilteredSuggestedHotspots().length,
-                        itemBuilder: (context, index) {
-                          final hotspot =
-                              viewModel.getFilteredSuggestedHotspots()[index];
-                          return ListTile(
-                            title: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    hotspot.displayName,
-                                    style: const TextStyle(
-                                        color: HotspotTheme.primaryColor),
-                                    overflow: TextOverflow.visible,
-                                    softWrap: true,
-                                  ),
-                                ),
-                                SizedBox(width: 8),
-                                Icon(
-                                  hotspot.isExistingChargeStationFound
-                                      ? Icons.ev_station_outlined
-                                      : Icons.ev_station,
-                                  color: hotspot.isExistingChargeStationFound
-                                      ? Colors.red
-                                      : Colors.green,
-                                  size: 20,
-                                ),
-                              ],
-                            ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    const Text(
-                                      'Score: ',
-                                      style: TextStyle(
-                                          color: HotspotTheme.secondaryTextColor),
-                                    ),
-                                    Expanded(
-                                      child: LinearProgressIndicator(
-                                        value: (hotspot.totalWeight ?? 0) / 10,
-                                        backgroundColor: Colors.grey[300],
-                                        color: HotspotTheme.primaryColor,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      '${hotspot.totalWeight?.toStringAsFixed(1) ?? 'N/A'}',
+                  Expanded(
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: [
+                        ListView.builder(
+                          controller: scrollController,
+                          itemCount: viewModel.getFilteredSuggestedHotspots().length,
+                          itemBuilder: (context, index) {
+                            final hotspot = viewModel.getFilteredSuggestedHotspots()[index];
+                            return ListTile(
+                              title: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      hotspot.displayName,
                                       style: const TextStyle(
-                                          color: HotspotTheme.secondaryTextColor),
-                                    ),
-                                  ],
-                                ),
-                                Row(
-                                  children: [
-                                    const Text(
-                                      'Rating: ',
-                                      style: TextStyle(
-                                          color: HotspotTheme.secondaryTextColor),
-                                    ),
-                                    RatingBarIndicator(
-                                      rating: hotspot.rating ?? 0,
-                                      itemBuilder: (context, _) => const Icon(
-                                        Icons.star,
-                                        color: HotspotTheme.accentColor,
+                                        color: HotspotTheme.primaryColor,
+                                        fontWeight: FontWeight.bold,
                                       ),
-                                      itemCount: 5,
-                                      itemSize: 20.0,
-                                      unratedColor: Colors.grey[300],
+                                      overflow: TextOverflow.visible,
+                                      softWrap: true,
                                     ),
-                                  ],
-                                ),
-                                Text(
-                                  'Address: ${hotspot.formattedAddress}',
-                                  style: const TextStyle(
-                                      color: HotspotTheme.secondaryTextColor),
-                                ),
-                              ],
-                            ),
-                            onTap: () {
-                              Navigator.pop(context);
-                              _showSuggestedDetailsDialog(hotspot);
-                            },
-                          );
-                        },
-                      ),
-                      ListView.builder(
-                        controller: scrollController,
-                        itemCount: viewModel.getFilteredEVStations().length,
-                        itemBuilder: (context, index) {
-                          final charger =
-                              viewModel.getFilteredEVStations()[index];
-                          return ListTile(
-                            title: Text(
-                              charger.displayName,
-                              style:
-                                  const TextStyle(color: HotspotTheme.primaryColor),
-                            ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    const Text(
-                                      'Rating: ',
-                                      style: TextStyle(
-                                          color: HotspotTheme.secondaryTextColor),
-                                    ),
-                                    RatingBarIndicator(
-                                      rating: charger.rating ?? 0,
-                                      itemBuilder: (context, _) => const Icon(
-                                        Icons.star,
-                                        color: HotspotTheme.accentColor,
+                                  ),
+                                  SizedBox(width: 8),
+                                  Icon(
+                                    hotspot.isExistingChargeStationFound
+                                        ? Icons.ev_station_outlined
+                                        : Icons.ev_station,
+                                    color: hotspot.isExistingChargeStationFound
+                                        ? Colors.red
+                                        : Colors.green,
+                                    size: 20,
+                                  ),
+                                ],
+                              ),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Text(
+                                        'Score: ',
+                                        style: TextStyle(color: HotspotTheme.buttonTextColor),
                                       ),
-                                      itemCount: 5,
-                                      itemSize: 20.0,
-                                      unratedColor: Colors.grey[300],
-                                    ),
-                                  ],
+                                      Expanded(
+                                        child: LinearProgressIndicator(
+                                          value: (hotspot.totalWeight ?? 0) / 10,
+                                          backgroundColor: Colors.grey[300],
+                                          color: HotspotTheme.accentColor,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        '${hotspot.totalWeight?.toStringAsFixed(1) ?? 'N/A'}',
+                                        style: const TextStyle(color: HotspotTheme.buttonTextColor),
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    children: [
+                                      const Text(
+                                        'Rating: ',
+                                        style: TextStyle(color: HotspotTheme.buttonTextColor),
+                                      ),
+                                      RatingBarIndicator(
+                                        rating: hotspot.rating ?? 0,
+                                        itemBuilder: (context, _) => const Icon(
+                                          Icons.star,
+                                          color: HotspotTheme.accentColor,
+                                        ),
+                                        itemCount: 5,
+                                        itemSize: 20.0,
+                                        unratedColor: Colors.grey[300],
+                                      ),
+                                    ],
+                                  ),
+                                  Text(
+                                    'Address: ${hotspot.formattedAddress}',
+                                    style: const TextStyle(color: HotspotTheme.buttonTextColor),
+                                  ),
+                                ],
+                              ),
+                              onTap: () => _showSuggestedDetailsDialog(hotspot),
+                            );
+                          },
+                        ),
+                        ListView.builder(
+                          controller: scrollController,
+                          itemCount: viewModel.getFilteredEVStations().length,
+                          itemBuilder: (context, index) {
+                            final charger = viewModel.getFilteredEVStations()[index];
+                            return ListTile(
+                              title: Text(
+                                charger.displayName,
+                                style: const TextStyle(
+                                  color: HotspotTheme.primaryColor,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                                Text(
-                                  'Address: ${charger.formattedAddress}',
-                                  style: const TextStyle(
-                                      color: HotspotTheme.secondaryTextColor),
-                                ),
-                              ],
-                            ),
-                            onTap: () {
-                              Navigator.pop(context);
-                              _showEVStationDetailsDialog(charger);
-                            },
-                          );
-                        },
-                      ),
-                    ],
+                              ),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Text(
+                                        'Rating: ',
+                                        style: TextStyle(color: HotspotTheme.buttonTextColor),
+                                      ),
+                                      RatingBarIndicator(
+                                        rating: charger.rating ?? 0,
+                                        itemBuilder: (context, _) => const Icon(
+                                          Icons.star,
+                                          color: HotspotTheme.accentColor,
+                                        ),
+                                        itemCount: 5,
+                                        itemSize: 20.0,
+                                        unratedColor: Colors.grey[300],
+                                      ),
+                                    ],
+                                  ),
+                                  Text(
+                                    'Address: ${charger.formattedAddress}',
+                                    style: const TextStyle(color: HotspotTheme.buttonTextColor),
+                                  ),
+                                ],
+                              ),
+                              onTap: () => _showEVStationDetailsDialog(charger),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-          );
-        },
-      );
-    },
-  );
-}
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   void _showSuggestedDetailsDialog(SuggestedHotspot hotspot) {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
+          backgroundColor: HotspotTheme.textColor,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           title: Text(
             hotspot.displayName,
             style: const TextStyle(
-                color: HotspotTheme.primaryColor, fontWeight: FontWeight.bold),
+              color: HotspotTheme.primaryColor,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           content: SizedBox(
             width: double.maxFinite,
@@ -369,8 +357,7 @@ void _showSuggestedListDialog(HotspotViewModel viewModel) {
                       ),
                     ],
                   ),
-                  _buildDetailRow(
-                      'User Rating Count', hotspot.userRatingCount.toString()),
+                  _buildDetailRow('User Rating Count', hotspot.userRatingCount.toString()),
                   Row(
                     children: [
                       const Text(
@@ -384,25 +371,25 @@ void _showSuggestedListDialog(HotspotViewModel viewModel) {
                         child: LinearProgressIndicator(
                           value: (hotspot.totalWeight ?? 0) / 10,
                           backgroundColor: Colors.grey[300],
-                          color: HotspotTheme.primaryColor,
+                          color: HotspotTheme.accentColor,
                         ),
                       ),
                       const SizedBox(width: 8),
                       Text(
                         hotspot.totalWeight?.toStringAsFixed(1) ?? 'N/A',
-                        style: const TextStyle(color: HotspotTheme.textColor),
+                        style: const TextStyle(color: HotspotTheme.buttonTextColor),
                       ),
                     ],
                   ),
                   _buildDetailRow('Types', hotspot.types.join(', ')),
                   GestureDetector(
                     onTap: () => _launchUrl(hotspot.googleMapsUri),
-                    child: const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 4.0),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
                       child: Text(
                         'Google Maps Link',
                         style: TextStyle(
-                          color: Colors.blue,
+                          color: HotspotTheme.accentColor,
                           decoration: TextDecoration.underline,
                         ),
                       ),
@@ -432,8 +419,7 @@ void _showSuggestedListDialog(HotspotViewModel viewModel) {
                             Expanded(
                               child: Text(
                                 '${detail.displayName} (${detail.distance}m away)',
-                                style:
-                                    const TextStyle(color: HotspotTheme.textColor),
+                                style: const TextStyle(color: HotspotTheme.buttonTextColor),
                               ),
                             ),
                           ],
@@ -457,18 +443,20 @@ void _showSuggestedListDialog(HotspotViewModel viewModel) {
                       ),
                       builder: (context, snapshot) {
                         if (!snapshot.hasData) {
-                          return const Center(child: CircularProgressIndicator());
+                          return Center(
+                            child: CircularProgressIndicator(
+                              color: HotspotTheme.accentColor,
+                            ),
+                          );
                         }
                         final loadResults = snapshot.data!;
-                        final hasValidImage =
-                            loadResults.any((success) => success);
+                        final hasValidImage = loadResults.any((success) => success);
 
                         if (hotspot.photo.isEmpty || !hasValidImage) {
                           return const Center(
                             child: Text(
                               'No photos available',
-                              style:
-                                  TextStyle(color: HotspotTheme.secondaryTextColor),
+                              style: TextStyle(color: HotspotTheme.buttonTextColor),
                             ),
                           );
                         }
@@ -507,8 +495,10 @@ void _showSuggestedListDialog(HotspotViewModel viewModel) {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Close',
-                  style: TextStyle(color: HotspotTheme.primaryColor)),
+              child: const Text(
+                'Close',
+                style: TextStyle(color: HotspotTheme.primaryColor),
+              ),
             ),
           ],
         );
@@ -521,10 +511,14 @@ void _showSuggestedListDialog(HotspotViewModel viewModel) {
       context: context,
       builder: (context) {
         return AlertDialog(
+          backgroundColor: HotspotTheme.textColor,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           title: Text(
             charger.displayName,
             style: const TextStyle(
-                color: HotspotTheme.primaryColor, fontWeight: FontWeight.bold),
+              color: HotspotTheme.primaryColor,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           content: SizedBox(
             width: double.maxFinite,
@@ -556,21 +550,24 @@ void _showSuggestedListDialog(HotspotViewModel viewModel) {
                       ),
                     ],
                   ),
+                  _buildDetailRow('User Rating Count', charger.userRatingCount.toString()),
                   _buildDetailRow(
-                      'User Rating Count', charger.userRatingCount.toString()),
-                  _buildDetailRow('Max Charge Rate',
-                      charger.evChargeOptions.maxChargeRate?.toString() ?? 'N/A'),
-                  _buildDetailRow('Connector Count',
-                      charger.evChargeOptions.connectorCount.toString()),
+                    'Max Charge Rate',
+                    charger.evChargeOptions.maxChargeRate?.toString() ?? 'N/A',
+                  ),
+                  _buildDetailRow(
+                    'Connector Count',
+                    charger.evChargeOptions.connectorCount.toString(),
+                  ),
                   _buildDetailRow('Type', charger.evChargeOptions.type ?? 'N/A'),
                   GestureDetector(
                     onTap: () => _launchUrl(charger.googleMapsUri),
-                    child: const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 4.0),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
                       child: Text(
                         'Google Maps Link',
                         style: TextStyle(
-                          color: Colors.blue,
+                          color: HotspotTheme.accentColor,
                           decoration: TextDecoration.underline,
                         ),
                       ),
@@ -583,8 +580,10 @@ void _showSuggestedListDialog(HotspotViewModel viewModel) {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Close',
-                  style: TextStyle(color: HotspotTheme.primaryColor)),
+              child: const Text(
+                'Close',
+                style: TextStyle(color: HotspotTheme.primaryColor),
+              ),
             ),
           ],
         );
@@ -608,7 +607,7 @@ void _showSuggestedListDialog(HotspotViewModel viewModel) {
           builder: (context, scrollController) {
             return Container(
               decoration: const BoxDecoration(
-                color: HotspotTheme.backgroundColor,
+                color: HotspotTheme.textColor,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               ),
               child: SingleChildScrollView(
@@ -622,26 +621,26 @@ void _showSuggestedListDialog(HotspotViewModel viewModel) {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            hotspot?.displayName ?? charger!.displayName,
-                            style: const TextStyle(
-                              color: HotspotTheme.primaryColor,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                          Flexible(
+                            child: Text(
+                              hotspot?.displayName ?? charger!.displayName,
+                              style: const TextStyle(
+                                color: HotspotTheme.primaryColor,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           IconButton(
-                            icon: const Icon(Icons.close,
-                                color: HotspotTheme.primaryColor),
+                            icon: const Icon(Icons.close, color: HotspotTheme.primaryColor),
                             onPressed: () => Navigator.pop(context),
                           ),
                         ],
                       ),
                       const SizedBox(height: 10),
-                      _buildDetailRow(
-                          'Name', hotspot?.displayName ?? charger!.displayName),
-                      _buildDetailRow('Address',
-                          hotspot?.formattedAddress ?? charger!.formattedAddress),
+                      _buildDetailRow('Name', hotspot?.displayName ?? charger!.displayName),
+                      _buildDetailRow('Address', hotspot?.formattedAddress ?? charger!.formattedAddress),
                       Row(
                         children: [
                           const Text(
@@ -665,8 +664,7 @@ void _showSuggestedListDialog(HotspotViewModel viewModel) {
                       ),
                       _buildDetailRow(
                         'User Rating Count',
-                        (hotspot?.userRatingCount ?? charger!.userRatingCount)
-                            .toString(),
+                        (hotspot?.userRatingCount ?? charger!.userRatingCount).toString(),
                       ),
                       if (hotspot != null) ...[
                         Row(
@@ -682,13 +680,13 @@ void _showSuggestedListDialog(HotspotViewModel viewModel) {
                               child: LinearProgressIndicator(
                                 value: (hotspot.totalWeight ?? 0) / 10,
                                 backgroundColor: Colors.grey[300],
-                                color: HotspotTheme.primaryColor,
+                                color: HotspotTheme.accentColor,
                               ),
                             ),
                             const SizedBox(width: 8),
                             Text(
                               hotspot.totalWeight?.toStringAsFixed(1) ?? 'N/A',
-                              style: const TextStyle(color: HotspotTheme.textColor),
+                              style: const TextStyle(color: HotspotTheme.buttonTextColor),
                             ),
                           ],
                         ),
@@ -712,14 +710,12 @@ void _showSuggestedListDialog(HotspotViewModel viewModel) {
                                 children: [
                                   const Text(
                                     '• ',
-                                    style:
-                                        TextStyle(color: HotspotTheme.primaryColor),
+                                    style: TextStyle(color: HotspotTheme.primaryColor),
                                   ),
                                   Expanded(
                                     child: Text(
                                       '${detail.displayName} (${detail.distance}m away)',
-                                      style: const TextStyle(
-                                          color: HotspotTheme.textColor),
+                                      style: const TextStyle(color: HotspotTheme.buttonTextColor),
                                     ),
                                   ),
                                 ],
@@ -729,23 +725,24 @@ void _showSuggestedListDialog(HotspotViewModel viewModel) {
                         ],
                       ],
                       if (charger != null) ...[
-                        _buildDetailRow('Max Charge Rate',
-                            charger.evChargeOptions.maxChargeRate?.toString() ??
-                                'N/A'),
-                        _buildDetailRow('Connector Count',
-                            charger.evChargeOptions.connectorCount.toString()),
                         _buildDetailRow(
-                            'Type', charger.evChargeOptions.type ?? 'N/A'),
+                          'Max Charge Rate',
+                          charger.evChargeOptions.maxChargeRate?.toString() ?? 'N/A',
+                        ),
+                        _buildDetailRow(
+                          'Connector Count',
+                          charger.evChargeOptions.connectorCount.toString(),
+                        ),
+                        _buildDetailRow('Type', charger.evChargeOptions.type ?? 'N/A'),
                       ],
                       GestureDetector(
-                        onTap: () => _launchUrl(
-                            hotspot?.googleMapsUri ?? charger!.googleMapsUri),
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 4.0),
+                        onTap: () => _launchUrl(hotspot?.googleMapsUri ?? charger!.googleMapsUri),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4.0),
                           child: Text(
                             'Google Maps Link',
                             style: TextStyle(
-                              color: Colors.blue,
+                              color: HotspotTheme.accentColor,
                               decoration: TextDecoration.underline,
                             ),
                           ),
@@ -768,19 +765,20 @@ void _showSuggestedListDialog(HotspotViewModel viewModel) {
                             ),
                             builder: (context, snapshot) {
                               if (!snapshot.hasData) {
-                                return const Center(
-                                    child: CircularProgressIndicator());
+                                return Center(
+                                  child: CircularProgressIndicator(
+                                    color: HotspotTheme.accentColor,
+                                  ),
+                                );
                               }
                               final loadResults = snapshot.data!;
-                              final hasValidImage =
-                                  loadResults.any((success) => success);
+                              final hasValidImage = loadResults.any((success) => success);
 
                               if (hotspot.photo.isEmpty || !hasValidImage) {
                                 return const Center(
                                   child: Text(
                                     'No photos available',
-                                    style: TextStyle(
-                                        color: HotspotTheme.secondaryTextColor),
+                                    style: TextStyle(color: HotspotTheme.buttonTextColor),
                                   ),
                                 );
                               }
@@ -801,8 +799,7 @@ void _showSuggestedListDialog(HotspotViewModel viewModel) {
                                         width: 100,
                                         height: 100,
                                         fit: BoxFit.cover,
-                                        errorBuilder:
-                                            (context, error, stackTrace) {
+                                        errorBuilder: (context, error, stackTrace) {
                                           return const SizedBox.shrink();
                                         },
                                       ),
@@ -826,6 +823,11 @@ void _showSuggestedListDialog(HotspotViewModel viewModel) {
   }
 
   void _showFilterBottomSheet(HotspotViewModel viewModel) {
+    bool tempShowSuggested = viewModel.showSuggested;
+    bool tempShowExisting = viewModel.showExisting;
+    RangeValues tempScoreRange = viewModel.scoreRange;
+    RangeValues tempRatingRange = viewModel.ratingRange;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -839,7 +841,7 @@ void _showSuggestedListDialog(HotspotViewModel viewModel) {
             return Container(
               padding: const EdgeInsets.all(16),
               decoration: const BoxDecoration(
-                color: HotspotTheme.backgroundColor,
+                color: HotspotTheme.textColor,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               ),
               child: SingleChildScrollView(
@@ -859,32 +861,35 @@ void _showSuggestedListDialog(HotspotViewModel viewModel) {
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.close,
-                              color: HotspotTheme.primaryColor),
+                          icon: const Icon(Icons.close, color: HotspotTheme.primaryColor),
                           onPressed: () => Navigator.pop(context),
                         ),
                       ],
                     ),
                     const SizedBox(height: 16),
                     CheckboxListTile(
-                      title: const Text('Show Suggested Hotspots',
-                          style: TextStyle(color: HotspotTheme.textColor)),
-                      value: viewModel.showSuggested,
-                      activeColor: HotspotTheme.primaryColor,
+                      title: const Text(
+                        'Show Suggested Hotspots',
+                        style: TextStyle(color: HotspotTheme.buttonTextColor),
+                      ),
+                      value: tempShowSuggested,
+                      activeColor: HotspotTheme.accentColor,
                       onChanged: (value) {
                         setState(() {
-                          viewModel.toggleShowSuggested(value!);
+                          tempShowSuggested = value!;
                         });
                       },
                     ),
                     CheckboxListTile(
-                      title: const Text('Show Existing Chargers',
-                          style: TextStyle(color: HotspotTheme.textColor)),
-                      value: viewModel.showExisting,
-                      activeColor: HotspotTheme.primaryColor,
+                      title: const Text(
+                        'Show Existing Chargers',
+                        style: TextStyle(color: HotspotTheme.buttonTextColor),
+                      ),
+                      value: tempShowExisting,
+                      activeColor: HotspotTheme.accentColor,
                       onChanged: (value) {
                         setState(() {
-                          viewModel.toggleShowExisting(value!);
+                          tempShowExisting = value!;
                         });
                       },
                     ),
@@ -893,8 +898,9 @@ void _showSuggestedListDialog(HotspotViewModel viewModel) {
                       child: Text(
                         'Score Range (0-10)',
                         style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: HotspotTheme.primaryColor),
+                          fontWeight: FontWeight.bold,
+                          color: HotspotTheme.primaryColor,
+                        ),
                       ),
                     ),
                     Padding(
@@ -902,26 +908,30 @@ void _showSuggestedListDialog(HotspotViewModel viewModel) {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(viewModel.scoreRange.start.toStringAsFixed(1),
-                              style: const TextStyle(color: HotspotTheme.textColor)),
-                          Text(viewModel.scoreRange.end.toStringAsFixed(1),
-                              style: const TextStyle(color: HotspotTheme.textColor)),
+                          Text(
+                            tempScoreRange.start.toStringAsFixed(1),
+                            style: const TextStyle(color: HotspotTheme.buttonTextColor),
+                          ),
+                          Text(
+                            tempScoreRange.end.toStringAsFixed(1),
+                            style: const TextStyle(color: HotspotTheme.buttonTextColor),
+                          ),
                         ],
                       ),
                     ),
                     RangeSlider(
-                      values: viewModel.scoreRange,
+                      values: tempScoreRange,
                       min: 0,
                       max: 10,
                       divisions: 10,
-                      activeColor: HotspotTheme.primaryColor,
+                      activeColor: HotspotTheme.accentColor,
                       labels: RangeLabels(
-                        viewModel.scoreRange.start.toStringAsFixed(1),
-                        viewModel.scoreRange.end.toStringAsFixed(1),
+                        tempScoreRange.start.toStringAsFixed(1),
+                        tempScoreRange.end.toStringAsFixed(1),
                       ),
                       onChanged: (values) {
                         setState(() {
-                          viewModel.updateScoreRange(values);
+                          tempScoreRange = values;
                         });
                       },
                     ),
@@ -930,8 +940,9 @@ void _showSuggestedListDialog(HotspotViewModel viewModel) {
                       child: Text(
                         'Rating Range (0-5)',
                         style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: HotspotTheme.primaryColor),
+                          fontWeight: FontWeight.bold,
+                          color: HotspotTheme.primaryColor,
+                        ),
                       ),
                     ),
                     Padding(
@@ -939,26 +950,30 @@ void _showSuggestedListDialog(HotspotViewModel viewModel) {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(viewModel.ratingRange.start.toStringAsFixed(1),
-                              style: const TextStyle(color: HotspotTheme.textColor)),
-                          Text(viewModel.ratingRange.end.toStringAsFixed(1),
-                              style: const TextStyle(color: HotspotTheme.textColor)),
+                          Text(
+                            tempRatingRange.start.toStringAsFixed(1),
+                            style: const TextStyle(color: HotspotTheme.buttonTextColor),
+                          ),
+                          Text(
+                            tempRatingRange.end.toStringAsFixed(1),
+                            style: const TextStyle(color: HotspotTheme.buttonTextColor),
+                          ),
                         ],
                       ),
                     ),
                     RangeSlider(
-                      values: viewModel.ratingRange,
+                      values: tempRatingRange,
                       min: 0,
                       max: 5,
                       divisions: 40,
-                      activeColor: HotspotTheme.primaryColor,
+                      activeColor: HotspotTheme.accentColor,
                       labels: RangeLabels(
-                        viewModel.ratingRange.start.toStringAsFixed(1),
-                        viewModel.ratingRange.end.toStringAsFixed(1),
+                        tempRatingRange.start.toStringAsFixed(1),
+                        tempRatingRange.end.toStringAsFixed(1),
                       ),
                       onChanged: (values) {
                         setState(() {
-                          viewModel.updateRatingRange(values);
+                          tempRatingRange = values;
                         });
                       },
                     ),
@@ -967,10 +982,16 @@ void _showSuggestedListDialog(HotspotViewModel viewModel) {
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: () {
+                          viewModel.setFilters(
+                            showSuggested: tempShowSuggested,
+                            showExisting: tempShowExisting,
+                            scoreRange: tempScoreRange,
+                            ratingRange: tempRatingRange,
+                          );
                           Navigator.pop(context);
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: HotspotTheme.primaryColor,
+                          backgroundColor: HotspotTheme.accentColor,
                           foregroundColor: HotspotTheme.buttonTextColor,
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
@@ -1018,7 +1039,7 @@ void _showSuggestedListDialog(HotspotViewModel viewModel) {
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(color: HotspotTheme.textColor),
+              style: const TextStyle(color: HotspotTheme.buttonTextColor),
             ),
           ),
         ],
@@ -1049,71 +1070,22 @@ void _showSuggestedListDialog(HotspotViewModel viewModel) {
     }
   }
 
-  Widget _buildLegend(HotspotViewModel viewModel) {
-    return Positioned(
-      bottom: 20,
-      left: 10,
-      child: Card(
-        color: HotspotTheme.backgroundColor.withOpacity(0.85),
-        elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Legend',
-                style: TextStyle(
-                  color: HotspotTheme.primaryColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-              const SizedBox(height: 8),
-              _buildLegendItem(Colors.purple, 'EV Stations'),
-              _buildLegendItem(Colors.green, 'Score ≥ 7'),
-              _buildLegendItem(Colors.yellow, 'Score 4 < 7'),
-              _buildLegendItem(Colors.red, 'Score < 4'),
-            ],
-          ),
-        ),
-      ),
+  
+  Future<void> _logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isLoggedIn', false);
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
     );
   }
 
-  Widget _buildLegendItem(Color color, String label) {
-    return Row(
-      children: [
-        Container(
-          width: 16,
-          height: 16,
-          margin: const EdgeInsets.only(right: 8),
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
-        ),
-        Text(
-          label,
-          style: const TextStyle(color: HotspotTheme.textColor),
-        ),
-      ],
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Consumer<HotspotViewModel>(
         builder: (context, viewModel, child) {
-          if (viewModel.hotspotResponse != null) {
-            viewModel.applyFilters(
-              onSuggestedTap: (hotspot) => _showMarkerDetailsBottomSheet(hotspot: hotspot),
-              onExistingTap: (charger) => _showMarkerDetailsBottomSheet(charger: charger),
-            );
-          }
-      
           return Stack(
             children: [
               GoogleMap(
@@ -1139,6 +1111,7 @@ void _showSuggestedListDialog(HotspotViewModel viewModel) {
                 child: Column(
                   children: [
                     Card(
+                      color: HotspotTheme.textColor,
                       elevation: 5,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -1147,16 +1120,16 @@ void _showSuggestedListDialog(HotspotViewModel viewModel) {
                         children: [
                           Expanded(
                             child: Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 8.0),
+                              padding: const EdgeInsets.symmetric(horizontal: 8.0),
                               child: TextField(
                                 controller: _searchController,
+                                style: const TextStyle(color: HotspotTheme.buttonTextColor),
                                 textAlignVertical: TextAlignVertical.center,
                                 decoration: const InputDecoration(
                                   hintText: 'Search location...',
+                                  hintStyle: TextStyle(color: Colors.grey),
                                   border: InputBorder.none,
-                                  suffixIcon: Icon(Icons.search,
-                                      color: HotspotTheme.primaryColor),
+                                  suffixIcon: Icon(Icons.search, color: HotspotTheme.accentColor),
                                 ),
                               ),
                             ),
@@ -1170,8 +1143,7 @@ void _showSuggestedListDialog(HotspotViewModel viewModel) {
                               ),
                             ),
                             child: IconButton(
-                              icon: const Icon(Icons.filter_list,
-                                  color: HotspotTheme.primaryColor),
+                              icon: const Icon(Icons.filter_list, color: HotspotTheme.accentColor),
                               onPressed: () => _showFilterBottomSheet(viewModel),
                               tooltip: 'Filter options',
                             ),
@@ -1180,35 +1152,34 @@ void _showSuggestedListDialog(HotspotViewModel viewModel) {
                       ),
                     ),
                     if (_placeSuggestions.isNotEmpty)
-  Card(
-    elevation: 5,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(10),
-    ),
-    child: Container(
-      constraints: const BoxConstraints(maxHeight: 200),
-      width: double.infinity,
-      child: ListView.builder(
-        shrinkWrap: true,
-        itemCount: _placeSuggestions.length,
-        itemBuilder: (context, index) {
-          final suggestion = _placeSuggestions[index];
-          return ListTile(
-            title: Text(
-              suggestion['description'],
-              style: const TextStyle(color: HotspotTheme.textColor),
-            ),
-            onTap: () {
-              // Dismiss the keyboard
-              FocusScope.of(context).unfocus();
-              // Select the place
-              _selectPlace(suggestion['place_id']);
-            },
-          );
-        },
-      ),
-    ),
-  ),
+                      Card(
+                        color: HotspotTheme.textColor,
+                        elevation: 5,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Container(
+                          constraints: const BoxConstraints(maxHeight: 200),
+                          width: double.infinity,
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            itemCount: _placeSuggestions.length,
+                            itemBuilder: (context, index) {
+                              final suggestion = _placeSuggestions[index];
+                              return ListTile(
+                                title: Text(
+                                  suggestion['description'],
+                                  style: const TextStyle(color: HotspotTheme.buttonTextColor),
+                                ),
+                                onTap: () {
+                                  FocusScope.of(context).unfocus();
+                                  _selectPlace(suggestion['place_id']);
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -1216,13 +1187,13 @@ void _showSuggestedListDialog(HotspotViewModel viewModel) {
                 bottom: 100,
                 right: 7,
                 child: FloatingActionButton(
-                  heroTag: 'mapType', // Unique tag
+                  heroTag: 'mapType',
                   onPressed: _toggleMapType,
                   mini: true,
-                  backgroundColor: HotspotTheme.backgroundColor,
+                  backgroundColor: HotspotTheme.textColor,
                   child: Icon(
                     _mapType == MapType.normal ? Icons.satellite : Icons.map,
-                    color: HotspotTheme.primaryColor,
+                    color: HotspotTheme.accentColor,
                   ),
                 ),
               ),
@@ -1230,53 +1201,60 @@ void _showSuggestedListDialog(HotspotViewModel viewModel) {
                 bottom: 150,
                 right: 7,
                 child: FloatingActionButton(
-                  heroTag: 'list', // Unique tag
+                  heroTag: 'list',
                   mini: true,
-                  backgroundColor: HotspotTheme.backgroundColor,
+                  backgroundColor: HotspotTheme.textColor,
                   onPressed: () => _showSuggestedListDialog(viewModel),
-                  child:
-                      const Icon(Icons.list, color: HotspotTheme.primaryColor),
+                  child: const Icon(Icons.list, color: HotspotTheme.accentColor),
                 ),
               ),
               Positioned(
                 bottom: 200,
                 right: 7,
                 child: FloatingActionButton(
-                  heroTag: 'clear', // Unique tag
+                  heroTag: 'clear',
                   mini: true,
-                  backgroundColor: HotspotTheme.backgroundColor,
+                  backgroundColor: HotspotTheme.textColor,
                   onPressed: () {
                     viewModel.clearSelection();
                   },
-                  child: const Icon(Icons.remove_circle_outline,
-                      color: HotspotTheme.primaryColor),
+                  child: const Icon(Icons.remove_circle_outline, color: HotspotTheme.accentColor),
                 ),
               ),
               Positioned(
                 bottom: 250,
                 right: 7,
                 child: FloatingActionButton(
-                  heroTag: 'analytics', // Unique tag
+                  heroTag: 'analytics',
                   mini: true,
-                  backgroundColor: HotspotTheme.backgroundColor,
+                  backgroundColor: HotspotTheme.textColor,
                   onPressed: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => AnalyticsScreen()),
                     );
                   },
-                  child: const Icon(Icons.analytics,
-                      color: HotspotTheme.primaryColor),
+                  child: const Icon(Icons.analytics, color: HotspotTheme.accentColor),
                 ),
               ),
-              _buildLegend(viewModel),
+              Positioned(
+                bottom: 300, // Add logout button above analytics
+                right: 7,
+                child: FloatingActionButton(
+                  heroTag: 'logout',
+                  mini: true,
+                  backgroundColor: HotspotTheme.textColor,
+                  onPressed: _logout,
+                  child: const Icon(Icons.logout, color: HotspotTheme.accentColor),
+                ),
+              ),
               if (viewModel.selectedLocation != null)
                 Positioned(
                   bottom: 20,
                   left: 7,
                   right: 7,
                   child: Card(
-                    color: HotspotTheme.backgroundColor,
+                    color: HotspotTheme.textColor,
                     elevation: 6,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15),
@@ -1299,10 +1277,8 @@ void _showSuggestedListDialog(HotspotViewModel viewModel) {
                                 ),
                               ),
                               IconButton(
-                                icon: const Icon(Icons.clear,
-                                    color: HotspotTheme.primaryColor),
-                                onPressed:
-                                    viewModel.clearSelectionForAdjustRadius,
+                                icon: const Icon(Icons.clear, color: HotspotTheme.primaryColor),
+                                onPressed: viewModel.clearSelectionForAdjustRadius,
                                 padding: EdgeInsets.zero,
                               ),
                             ],
@@ -1310,22 +1286,19 @@ void _showSuggestedListDialog(HotspotViewModel viewModel) {
                           const SizedBox(height: 8),
                           Row(
                             children: [
-                              const Text('1 km',
-                                  style: TextStyle(color: HotspotTheme.primaryColor)),
+                              const Text('1 km', style: TextStyle(color: HotspotTheme.buttonTextColor)),
                               Expanded(
                                 child: Slider(
                                   value: viewModel.radius,
                                   min: 1.0,
                                   max: 50.0,
                                   divisions: 49,
-                                  label:
-                                      '${viewModel.radius.toStringAsFixed(1)} km',
-                                  activeColor: HotspotTheme.primaryColor,
+                                  label: '${viewModel.radius.toStringAsFixed(1)} km',
+                                  activeColor: HotspotTheme.accentColor,
                                   onChanged: viewModel.updateRadius,
                                 ),
                               ),
-                              const Text('50 km',
-                                  style: TextStyle(color: HotspotTheme.primaryColor)),
+                              const Text('50 km', style: TextStyle(color: HotspotTheme.buttonTextColor)),
                             ],
                           ),
                           const SizedBox(height: 16),
@@ -1333,11 +1306,9 @@ void _showSuggestedListDialog(HotspotViewModel viewModel) {
                             width: double.infinity,
                             height: 48,
                             child: ElevatedButton(
-                              onPressed: viewModel.isLoading
-                                  ? null
-                                  : viewModel.fetchHotspots,
+                              onPressed: viewModel.isLoading ? null : viewModel.fetchHotspots,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: HotspotTheme.primaryColor,
+                                backgroundColor: HotspotTheme.accentColor,
                                 foregroundColor: HotspotTheme.buttonTextColor,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
