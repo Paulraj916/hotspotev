@@ -1166,15 +1166,13 @@ void _showSuggestedListDialog(HotspotViewModel viewModel) {
                             width: 40,
                             decoration: const BoxDecoration(
                               border: Border(
-                                left:
-                                    BorderSide(color: Colors.grey, width: 0.5),
+                                left: BorderSide(color: Colors.grey, width: 0.5),
                               ),
                             ),
                             child: IconButton(
                               icon: const Icon(Icons.filter_list,
                                   color: HotspotTheme.primaryColor),
-                              onPressed: () =>
-                                  _showFilterBottomSheet(viewModel),
+                              onPressed: () => _showFilterBottomSheet(viewModel),
                               tooltip: 'Filter options',
                             ),
                           ),
@@ -1182,63 +1180,35 @@ void _showSuggestedListDialog(HotspotViewModel viewModel) {
                       ),
                     ),
                     if (_placeSuggestions.isNotEmpty)
-                      Card(
-                        elevation: 5,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 8.0),
-                                child: GestureDetector(
-                                  onTap: () {
-                                    // Dismiss the keyboard by unfocusing the TextField
-                                    FocusScope.of(context).unfocus();
-                                  },
-                                  child: TextField(
-                                    controller: _searchController,
-                                    textAlignVertical: TextAlignVertical.center,
-                                    decoration: const InputDecoration(
-                                      hintText: 'Search location...',
-                                      border: InputBorder.none,
-                                      suffixIcon: Icon(Icons.search,
-                                          color: HotspotTheme.primaryColor),
-                                    ),
-                                    onTap: () {
-                                      // Prevent the keyboard from reappearing immediately
-                                      FocusScope.of(context).unfocus();
-                                      // Optional: You can re-focus if you want to allow editing after a second tap
-                                      // Future.delayed(Duration(milliseconds: 100), () {
-                                      //   FocusScope.of(context).requestFocus(FocusNode());
-                                      // });
-                                    },
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Container(
-                              height: 56,
-                              width: 40,
-                              decoration: const BoxDecoration(
-                                border: Border(
-                                  left: BorderSide(
-                                      color: Colors.grey, width: 0.5),
-                                ),
-                              ),
-                              child: IconButton(
-                                icon: const Icon(Icons.filter_list,
-                                    color: HotspotTheme.primaryColor),
-                                onPressed: () =>
-                                    _showFilterBottomSheet(viewModel),
-                                tooltip: 'Filter options',
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+  Card(
+    elevation: 5,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(10),
+    ),
+    child: Container(
+      constraints: const BoxConstraints(maxHeight: 200),
+      width: double.infinity,
+      child: ListView.builder(
+        shrinkWrap: true,
+        itemCount: _placeSuggestions.length,
+        itemBuilder: (context, index) {
+          final suggestion = _placeSuggestions[index];
+          return ListTile(
+            title: Text(
+              suggestion['description'],
+              style: const TextStyle(color: HotspotTheme.textColor),
+            ),
+            onTap: () {
+              // Dismiss the keyboard
+              FocusScope.of(context).unfocus();
+              // Select the place
+              _selectPlace(suggestion['place_id']);
+            },
+          );
+        },
+      ),
+    ),
+  ),
                   ],
                 ),
               ),
