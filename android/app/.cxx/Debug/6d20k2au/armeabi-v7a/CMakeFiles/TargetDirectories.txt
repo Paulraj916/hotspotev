@@ -1,0 +1,2 @@
+C:/Users/pauld/desktop/tech-boot/flutter task/hotspot/android/app/.cxx/Debug/6d20k2au/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/pauld/desktop/tech-boot/flutter task/hotspot/android/app/.cxx/Debug/6d20k2au/armeabi-v7a/CMakeFiles/rebuild_cache.dir
