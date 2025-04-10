@@ -4,7 +4,9 @@ import 'hotspot_view.dart';
 import 'hotspot_viewmodel.dart';
 import 'hotspot_repository.dart';
 import 'api_client.dart';
-import 'splash_screen.dart'; // Import the splash screen
+import 'splash_screen.dart';
+import 'nearby_chargers_viewmodel.dart'; // Import new view model
+import 'nearby_chargers_repository.dart'; // Import new repository
 
 void main() {
   runApp(
@@ -12,8 +14,12 @@ void main() {
       providers: [
         Provider(create: (_) => ApiClient()),
         Provider(create: (context) => HotspotRepository(context.read<ApiClient>())),
+        Provider(create: (context) => NearbyChargersRepository(context.read<ApiClient>())),
         ChangeNotifierProvider(
           create: (context) => HotspotViewModel(context.read<HotspotRepository>()),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => NearbyChargersViewModel(context.read<NearbyChargersRepository>()),
         ),
       ],
       child: MyApp(),

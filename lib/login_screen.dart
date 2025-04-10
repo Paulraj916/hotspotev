@@ -92,7 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: HotspotTheme.backgroundColor,
+      backgroundColor: HotspotTheme.textColor,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -118,10 +118,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 40),
                 TextField(
                   controller: _emailController,
-                  style: TextStyle(color: HotspotTheme.textColor),
+                  style: TextStyle(color: HotspotTheme.buttonTextColor),
                   decoration: InputDecoration(
                     labelText: 'Email',
-                    labelStyle: TextStyle(color: HotspotTheme.secondaryTextColor),
+                    labelStyle: TextStyle(color: HotspotTheme.buttonTextColor),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -135,10 +135,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 20),
                 TextField(
                   controller: _passwordController,
-                  style: TextStyle(color: HotspotTheme.textColor),
+                  style: TextStyle(color: HotspotTheme.buttonTextColor),
                   decoration: InputDecoration(
                     labelText: 'Password',
-                    labelStyle: TextStyle(color: HotspotTheme.secondaryTextColor),
+                    labelStyle: TextStyle(color: HotspotTheme.buttonTextColor),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),

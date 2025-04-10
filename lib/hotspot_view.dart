@@ -157,9 +157,9 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
                     color: HotspotTheme.primaryColor,
                     child: TabBar(
                       controller: _tabController,
-                      labelColor: HotspotTheme.buttonTextColor,
-                      unselectedLabelColor: HotspotTheme.buttonTextColor.withOpacity(0.7),
-                      indicatorColor: HotspotTheme.buttonTextColor,
+                      labelColor: HotspotTheme.textColor,
+                      unselectedLabelColor: HotspotTheme.textColor.withOpacity(0.7),
+                      indicatorColor: HotspotTheme.textColor,
                       tabs: [
                         Tab(
                           text: 'Hotspots (${viewModel.getFilteredSuggestedHotspots().length})',
@@ -320,6 +320,7 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
         return AlertDialog(
           backgroundColor: HotspotTheme.textColor,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          
           title: Text(
             hotspot.displayName,
             style: const TextStyle(
@@ -334,7 +335,6 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _buildDetailRow('Name', hotspot.displayName),
                   _buildDetailRow('Address', hotspot.formattedAddress),
                   Row(
                     children: [

@@ -1,6 +1,7 @@
 // hotspot_viewmodel.dart
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:hotspot/main.dart';
 import 'hotspot_model.dart';
 import 'hotspot_repository.dart';
 import 'dart:math';
@@ -41,15 +42,15 @@ class HotspotViewModel extends ChangeNotifier {
   Future<BitmapDescriptor> getCustomMarker(double score,
       {bool isCharger = false}) async {
     Color primaryColor;
-    if (isCharger) {
-      primaryColor = const Color.fromARGB(255, 71, 45, 202); // Fixed color for all chargers
-    } else if (score >= 7) {
-      primaryColor = const Color.fromARGB(255, 65, 232, 70);
-    } else if (score >= 4) {
-      primaryColor = const Color.fromARGB(255, 255, 196, 0);
-    } else {
-      primaryColor = const Color.fromARGB(255, 226, 76, 65);
-    }
+if (isCharger) {
+  primaryColor = const Color.fromARGB(255, 81, 45, 198); // Deep Purple for chargers
+} else if (score >= 7) {
+  primaryColor = const Color.fromARGB(255, 46, 201, 62); // Forest Green for high scores
+} else if (score >= 4) {
+  primaryColor = const Color.fromARGB(255, 255, 179, 0); // Amber Yellow for medium scores
+} else {
+  primaryColor = const Color.fromARGB(255, 235, 64, 52); // Bright Red for low scores
+}
 
     final double width = 150;
     final double height = 150;
@@ -185,8 +186,8 @@ class HotspotViewModel extends ChangeNotifier {
         circleId: const CircleId('radius'),
         center: _selectedLocation!,
         radius: _radius * 1000,
-        fillColor: const Color.fromARGB(255, 54, 26, 237).withOpacity(0.2),
-        strokeColor: const Color.fromARGB(255, 54, 26, 237),
+        fillColor: const Color.fromARGB(255, 255, 187, 0).withOpacity(0.2),
+        strokeColor: HotspotTheme.textColor,
         strokeWidth: 2,
       ),
     );
