@@ -20,7 +20,8 @@ class HotspotMapScreen extends StatefulWidget {
   State<HotspotMapScreen> createState() => _HotspotMapScreenState();
 }
 
-class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProviderStateMixin {
+class _HotspotMapScreenState extends State<HotspotMapScreen>
+    with TickerProviderStateMixin {
   Completer<GoogleMapController>? _controller;
   MapType _mapType = MapType.normal;
   final TextEditingController _searchController = TextEditingController();
@@ -46,8 +47,10 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final viewModel = context.read<HotspotViewModel>();
       viewModel.setTapCallbacks(
-        onSuggestedTap: (hotspot) => _showMarkerDetailsBottomSheet(hotspot: hotspot),
-        onExistingTap: (charger) => _showMarkerDetailsBottomSheet(charger: charger),
+        onSuggestedTap: (hotspot) =>
+            _showMarkerDetailsBottomSheet(hotspot: hotspot),
+        onExistingTap: (charger) =>
+            _showMarkerDetailsBottomSheet(charger: charger),
       );
       _enable3DBuildings();
     });
@@ -70,6 +73,11 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
         _placeSuggestions = [];
       });
     }
+  }
+
+  Future<String?> _getUserEmail() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('userEmail') ?? 'admin@gmail.com'; // Fallback email
   }
 
   Future<void> _enable3DBuildings() async {
@@ -99,7 +107,8 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
   Future<void> _fetchPlaceSuggestions(String input) async {
     try {
       final viewModel = context.read<HotspotViewModel>();
-      final suggestions = await viewModel.fetchPlaceSuggestions(input, _sessionToken);
+      final suggestions =
+          await viewModel.fetchPlaceSuggestions(input, _sessionToken);
       setState(() {
         _placeSuggestions = suggestions;
       });
@@ -158,14 +167,17 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
                     child: TabBar(
                       controller: _tabController,
                       labelColor: HotspotTheme.textColor,
-                      unselectedLabelColor: HotspotTheme.textColor.withOpacity(0.7),
+                      unselectedLabelColor:
+                          HotspotTheme.textColor.withOpacity(0.7),
                       indicatorColor: HotspotTheme.textColor,
                       tabs: [
                         Tab(
-                          text: 'Hotspots (${viewModel.getFilteredSuggestedHotspots().length})',
+                          text:
+                              'Hotspots (${viewModel.getFilteredSuggestedHotspots().length})',
                         ),
                         Tab(
-                          text: 'EV Stations (${viewModel.getFilteredEVStations().length})',
+                          text:
+                              'EV Stations (${viewModel.getFilteredEVStations().length})',
                         ),
                       ],
                     ),
@@ -176,12 +188,15 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
                       children: [
                         ListView.builder(
                           controller: scrollController,
-                          itemCount: viewModel.getFilteredSuggestedHotspots().length,
+                          itemCount:
+                              viewModel.getFilteredSuggestedHotspots().length,
                           itemBuilder: (context, index) {
-                            final hotspot = viewModel.getFilteredSuggestedHotspots()[index];
+                            final hotspot =
+                                viewModel.getFilteredSuggestedHotspots()[index];
                             return ListTile(
                               title: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Flexible(
                                     child: Text(
@@ -213,11 +228,14 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
                                     children: [
                                       const Text(
                                         'Score: ',
-                                        style: TextStyle(color: HotspotTheme.buttonTextColor),
+                                        style: TextStyle(
+                                            color:
+                                                HotspotTheme.buttonTextColor),
                                       ),
                                       Expanded(
                                         child: LinearProgressIndicator(
-                                          value: (hotspot.totalWeight ?? 0) / 10,
+                                          value:
+                                              (hotspot.totalWeight ?? 0) / 10,
                                           backgroundColor: Colors.grey[300],
                                           color: HotspotTheme.accentColor,
                                         ),
@@ -225,7 +243,9 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
                                       const SizedBox(width: 8),
                                       Text(
                                         '${hotspot.totalWeight?.toStringAsFixed(1) ?? 'N/A'}',
-                                        style: const TextStyle(color: HotspotTheme.buttonTextColor),
+                                        style: const TextStyle(
+                                            color:
+                                                HotspotTheme.buttonTextColor),
                                       ),
                                     ],
                                   ),
@@ -233,7 +253,9 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
                                     children: [
                                       const Text(
                                         'Rating: ',
-                                        style: TextStyle(color: HotspotTheme.buttonTextColor),
+                                        style: TextStyle(
+                                            color:
+                                                HotspotTheme.buttonTextColor),
                                       ),
                                       RatingBarIndicator(
                                         rating: hotspot.rating ?? 0,
@@ -249,7 +271,8 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
                                   ),
                                   Text(
                                     'Address: ${hotspot.formattedAddress}',
-                                    style: const TextStyle(color: HotspotTheme.buttonTextColor),
+                                    style: const TextStyle(
+                                        color: HotspotTheme.buttonTextColor),
                                   ),
                                 ],
                               ),
@@ -261,12 +284,13 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
                           controller: scrollController,
                           itemCount: viewModel.getFilteredEVStations().length,
                           itemBuilder: (context, index) {
-                            final charger = viewModel.getFilteredEVStations()[index];
+                            final charger =
+                                viewModel.getFilteredEVStations()[index];
                             return ListTile(
                               title: Text(
                                 charger.displayName,
                                 style: const TextStyle(
-                                  color: HotspotTheme.primaryColor,
+                                  color: HotspotTheme.backgroundColor,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -277,7 +301,9 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
                                     children: [
                                       const Text(
                                         'Rating: ',
-                                        style: TextStyle(color: HotspotTheme.buttonTextColor),
+                                        style: TextStyle(
+                                            color:
+                                                HotspotTheme.buttonTextColor),
                                       ),
                                       RatingBarIndicator(
                                         rating: charger.rating ?? 0,
@@ -293,7 +319,8 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
                                   ),
                                   Text(
                                     'Address: ${charger.formattedAddress}',
-                                    style: const TextStyle(color: HotspotTheme.buttonTextColor),
+                                    style: const TextStyle(
+                                        color: HotspotTheme.buttonTextColor),
                                   ),
                                 ],
                               ),
@@ -319,8 +346,8 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
       builder: (context) {
         return AlertDialog(
           backgroundColor: HotspotTheme.textColor,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-          
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           title: Text(
             hotspot.displayName,
             style: const TextStyle(
@@ -357,7 +384,8 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
                       ),
                     ],
                   ),
-                  _buildDetailRow('User Rating Count', hotspot.userRatingCount.toString()),
+                  _buildDetailRow(
+                      'User Rating Count', hotspot.userRatingCount.toString()),
                   Row(
                     children: [
                       const Text(
@@ -377,11 +405,12 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
                       const SizedBox(width: 8),
                       Text(
                         hotspot.totalWeight?.toStringAsFixed(1) ?? 'N/A',
-                        style: const TextStyle(color: HotspotTheme.buttonTextColor),
+                        style: const TextStyle(
+                            color: HotspotTheme.buttonTextColor),
                       ),
                     ],
                   ),
-                  _buildDetailRow('Types', hotspot.types.join(', ')),
+                  _buildDetailRowTags('Types', hotspot.types),
                   GestureDetector(
                     onTap: () => _launchUrl(hotspot.googleMapsUri),
                     child: Padding(
@@ -414,12 +443,14 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
                           children: [
                             const Text(
                               '• ',
-                              style: TextStyle(color: HotspotTheme.primaryColor),
+                              style:
+                                  TextStyle(color: HotspotTheme.primaryColor),
                             ),
                             Expanded(
                               child: Text(
                                 '${detail.displayName} (${detail.distance}m away)',
-                                style: const TextStyle(color: HotspotTheme.buttonTextColor),
+                                style: const TextStyle(
+                                    color: HotspotTheme.buttonTextColor),
                               ),
                             ),
                           ],
@@ -450,13 +481,15 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
                           );
                         }
                         final loadResults = snapshot.data!;
-                        final hasValidImage = loadResults.any((success) => success);
+                        final hasValidImage =
+                            loadResults.any((success) => success);
 
                         if (hotspot.photo.isEmpty || !hasValidImage) {
                           return const Center(
                             child: Text(
                               'No photos available',
-                              style: TextStyle(color: HotspotTheme.buttonTextColor),
+                              style: TextStyle(
+                                  color: HotspotTheme.buttonTextColor),
                             ),
                           );
                         }
@@ -512,7 +545,8 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
       builder: (context) {
         return AlertDialog(
           backgroundColor: HotspotTheme.textColor,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           title: Text(
             charger.displayName,
             style: const TextStyle(
@@ -550,7 +584,8 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
                       ),
                     ],
                   ),
-                  _buildDetailRow('User Rating Count', charger.userRatingCount.toString()),
+                  _buildDetailRow(
+                      'User Rating Count', charger.userRatingCount.toString()),
                   _buildDetailRow(
                     'Max Charge Rate',
                     charger.evChargeOptions.maxChargeRate?.toString() ?? 'N/A',
@@ -559,7 +594,8 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
                     'Connector Count',
                     charger.evChargeOptions.connectorCount.toString(),
                   ),
-                  _buildDetailRow('Type', charger.evChargeOptions.type ?? 'N/A'),
+                  _buildDetailRow(
+                      'Type', charger.evChargeOptions.type ?? 'N/A'),
                   GestureDetector(
                     onTap: () => _launchUrl(charger.googleMapsUri),
                     child: Padding(
@@ -595,6 +631,11 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
     SuggestedHotspot? hotspot,
     ExistingCharger? charger,
   }) {
+    // Ensure at least one of hotspot or charger is non-null
+    if (hotspot == null && charger == null) {
+      return; // Or show an error message if appropriate
+    }
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -623,7 +664,9 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
                         children: [
                           Flexible(
                             child: Text(
-                              hotspot?.displayName ?? charger!.displayName,
+                              hotspot?.displayName ??
+                                  charger?.displayName ??
+                                  '',
                               style: const TextStyle(
                                 color: HotspotTheme.primaryColor,
                                 fontSize: 18,
@@ -633,25 +676,41 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
                             ),
                           ),
                           IconButton(
-                            icon: const Icon(Icons.close, color: HotspotTheme.primaryColor),
+                            icon: const Icon(Icons.close,
+                                color: HotspotTheme.primaryColor),
                             onPressed: () => Navigator.pop(context),
                           ),
                         ],
                       ),
                       const SizedBox(height: 10),
-                      _buildDetailRow('Name', hotspot?.displayName ?? charger!.displayName),
-                      _buildDetailRow('Address', hotspot?.formattedAddress ?? charger!.formattedAddress),
+                      Text(
+                        hotspot?.formattedAddress ??
+                            charger?.formattedAddress ??
+                            'N/A',
+                        style: TextStyle(
+                          color: HotspotTheme.backgroundColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(
+                        height: 10,
+                      ),
+                      // _buildDetailRow(
+                      //     'Address',
+                      //     hotspot?.formattedAddress ??
+                      //         charger?.formattedAddress ??
+                      //         'N/A'),
                       Row(
                         children: [
                           const Text(
                             'Rating: ',
                             style: TextStyle(
-                              color: HotspotTheme.primaryColor,
+                              color: HotspotTheme.backgroundColor,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           RatingBarIndicator(
-                            rating: hotspot?.rating ?? charger!.rating ?? 0,
+                            rating: hotspot?.rating ?? charger?.rating ?? 0,
                             itemBuilder: (context, _) => const Icon(
                               Icons.star,
                               color: HotspotTheme.accentColor,
@@ -660,19 +719,27 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
                             itemSize: 20.0,
                             unratedColor: Colors.grey[300],
                           ),
+                          if (hotspot != null) ...[
+                            Text(
+                              '    (${hotspot?.userRatingCount})',
+                              style: TextStyle(
+                                color: HotspotTheme.backgroundColor,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ]
                         ],
                       ),
-                      _buildDetailRow(
-                        'User Rating Count',
-                        (hotspot?.userRatingCount ?? charger!.userRatingCount).toString(),
-                      ),
                       if (hotspot != null) ...[
+                        SizedBox(
+                          height: 10,
+                        ),
                         Row(
                           children: [
                             const Text(
                               'Score: ',
                               style: TextStyle(
-                                color: HotspotTheme.primaryColor,
+                                color: HotspotTheme.backgroundColor,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -686,11 +753,12 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
                             const SizedBox(width: 8),
                             Text(
                               hotspot.totalWeight?.toStringAsFixed(1) ?? 'N/A',
-                              style: const TextStyle(color: HotspotTheme.buttonTextColor),
+                              style: const TextStyle(
+                                  color: HotspotTheme.buttonTextColor),
                             ),
                           ],
                         ),
-                        _buildDetailRow('Types', hotspot.types.join(', ')),
+                        _buildDetailRowTags('Types', hotspot.types),
                         if (hotspot.isExistingChargeStationFound &&
                             hotspot.nearestChargeStationDetail != null &&
                             hotspot.nearestChargeStationDetail!.isNotEmpty) ...[
@@ -704,18 +772,21 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
                           ),
                           ...hotspot.nearestChargeStationDetail!.map((detail) {
                             return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 4.0),
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 4.0),
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   const Text(
                                     '• ',
-                                    style: TextStyle(color: HotspotTheme.primaryColor),
+                                    style: TextStyle(
+                                        color: HotspotTheme.primaryColor),
                                   ),
                                   Expanded(
                                     child: Text(
                                       '${detail.displayName} (${detail.distance}m away)',
-                                      style: const TextStyle(color: HotspotTheme.buttonTextColor),
+                                      style: const TextStyle(
+                                          color: HotspotTheme.buttonTextColor),
                                     ),
                                   ),
                                 ],
@@ -727,24 +798,67 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
                       if (charger != null) ...[
                         _buildDetailRow(
                           'Max Charge Rate',
-                          charger.evChargeOptions.maxChargeRate?.toString() ?? 'N/A',
+                          charger.evChargeOptions.maxChargeRate?.toString() ??
+                              'N/A',
                         ),
                         _buildDetailRow(
                           'Connector Count',
                           charger.evChargeOptions.connectorCount.toString(),
                         ),
-                        _buildDetailRow('Type', charger.evChargeOptions.type ?? 'N/A'),
+                        SizedBox(
+                          height: 10,
+                        ),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color:
+                                    HotspotTheme.primaryColor.withOpacity(0.1),
+                                border: Border.all(
+                                    color: HotspotTheme.primaryColor),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                charger.evChargeOptions.type ?? 'N/A',
+                                style: const TextStyle(
+                                  color: HotspotTheme.primaryColor,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            )
+                          ].toList(),
+                        ),
                       ],
+                      SizedBox(
+                        height: 10,
+                      ),
                       GestureDetector(
-                        onTap: () => _launchUrl(hotspot?.googleMapsUri ?? charger!.googleMapsUri),
+                        onTap: () => _launchUrl(hotspot?.googleMapsUri ??
+                            charger?.googleMapsUri ??
+                            ''),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(vertical: 4.0),
-                          child: Text(
-                            'Google Maps Link',
-                            style: TextStyle(
-                              color: HotspotTheme.accentColor,
-                              decoration: TextDecoration.underline,
-                            ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Google Maps Link',
+                                style: TextStyle(
+                                  color: HotspotTheme.backgroundColor,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Icon(
+                                Icons.north_east,
+                                size: 14,
+                                color: HotspotTheme.backgroundColor,
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -772,13 +886,15 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
                                 );
                               }
                               final loadResults = snapshot.data!;
-                              final hasValidImage = loadResults.any((success) => success);
+                              final hasValidImage =
+                                  loadResults.any((success) => success);
 
                               if (hotspot.photo.isEmpty || !hasValidImage) {
                                 return const Center(
                                   child: Text(
                                     'No photos available',
-                                    style: TextStyle(color: HotspotTheme.buttonTextColor),
+                                    style: TextStyle(
+                                        color: HotspotTheme.buttonTextColor),
                                   ),
                                 );
                               }
@@ -799,7 +915,8 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
                                         width: 100,
                                         height: 100,
                                         fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) {
+                                        errorBuilder:
+                                            (context, error, stackTrace) {
                                           return const SizedBox.shrink();
                                         },
                                       ),
@@ -861,7 +978,8 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.close, color: HotspotTheme.primaryColor),
+                          icon: const Icon(Icons.close,
+                              color: HotspotTheme.primaryColor),
                           onPressed: () => Navigator.pop(context),
                         ),
                       ],
@@ -899,7 +1017,7 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
                         'Score Range (0-10)',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: HotspotTheme.primaryColor,
+                          color: HotspotTheme.backgroundColor,
                         ),
                       ),
                     ),
@@ -910,11 +1028,13 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
                         children: [
                           Text(
                             tempScoreRange.start.toStringAsFixed(1),
-                            style: const TextStyle(color: HotspotTheme.buttonTextColor),
+                            style: const TextStyle(
+                                color: HotspotTheme.buttonTextColor),
                           ),
                           Text(
                             tempScoreRange.end.toStringAsFixed(1),
-                            style: const TextStyle(color: HotspotTheme.buttonTextColor),
+                            style: const TextStyle(
+                                color: HotspotTheme.buttonTextColor),
                           ),
                         ],
                       ),
@@ -941,7 +1061,7 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
                         'Rating Range (0-5)',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: HotspotTheme.primaryColor,
+                          color: HotspotTheme.backgroundColor,
                         ),
                       ),
                     ),
@@ -952,11 +1072,13 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
                         children: [
                           Text(
                             tempRatingRange.start.toStringAsFixed(1),
-                            style: const TextStyle(color: HotspotTheme.buttonTextColor),
+                            style: const TextStyle(
+                                color: HotspotTheme.buttonTextColor),
                           ),
                           Text(
                             tempRatingRange.end.toStringAsFixed(1),
-                            style: const TextStyle(color: HotspotTheme.buttonTextColor),
+                            style: const TextStyle(
+                                color: HotspotTheme.buttonTextColor),
                           ),
                         ],
                       ),
@@ -1029,10 +1151,13 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          SizedBox(
+            height: 10,
+          ),
           Text(
             '$label: ',
             style: const TextStyle(
-              color: HotspotTheme.primaryColor,
+              color: HotspotTheme.backgroundColor,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -1041,6 +1166,46 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
               value,
               style: const TextStyle(color: HotspotTheme.buttonTextColor),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRowTags(String label, List<String> values) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: values.map((type) {
+              final formatted = type
+                  .split('_')
+                  .map((word) =>
+                      word[0].toUpperCase() + word.substring(1).toLowerCase())
+                  .join(' ');
+
+              return Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: HotspotTheme.primaryColor.withOpacity(0.1),
+                  border: Border.all(color: HotspotTheme.primaryColor),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  formatted,
+                  style: const TextStyle(
+                    color: HotspotTheme.backgroundColor,
+                    fontSize: 12,
+                  ),
+                ),
+              );
+            }).toList(),
           ),
         ],
       ),
@@ -1070,7 +1235,6 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
     }
   }
 
-  
   Future<void> _logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isLoggedIn', false);
@@ -1081,9 +1245,48 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
   }
 
 
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    drawer: Drawer(
+      child: FutureBuilder<String?>(
+        future: _getUserEmail(),
+        builder: (context, snapshot) {
+          final email = snapshot.data ?? 'No email found';
+          return Column(
+            children: [
+              UserAccountsDrawerHeader(
+                accountName: Text(
+                  'User',
+                  style: TextStyle(color: HotspotTheme.buttonTextColor),
+                ),
+                accountEmail: Text(
+                  email,
+                  style: TextStyle(color: HotspotTheme.buttonTextColor),
+                ),
+                decoration: BoxDecoration(
+                  color: HotspotTheme.textColor,
+                ),
+              ),
+              Expanded(child: Container()), // Spacer to push logout to bottom
+              ListTile(
+                leading: Icon(Icons.logout, color: HotspotTheme.accentColor),
+                title: Text(
+                  'Logout',
+                  style: TextStyle(color: HotspotTheme.textColor),
+                ),
+                onTap: () {
+                  _logout();
+                  Navigator.pop(context); // Close drawer
+                },
+              ),
+              const SizedBox(height: 16),
+            ],
+          );
+        },
+      ),
+    ),
+    body: SafeArea(
       child: Consumer<HotspotViewModel>(
         builder: (context, viewModel, child) {
           return Stack(
@@ -1103,6 +1306,9 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
                 scrollGesturesEnabled: true,
                 tiltGesturesEnabled: true,
                 rotateGesturesEnabled: true,
+                zoomControlsEnabled: false,
+                mapToolbarEnabled: false,
+                myLocationButtonEnabled: false,
               ),
               Positioned(
                 top: 10,
@@ -1118,34 +1324,31 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
                       ),
                       child: Row(
                         children: [
+                          IconButton(
+                            icon: const Icon(Icons.menu,
+                                color: HotspotTheme.accentColor),
+                            onPressed: () {
+                              Scaffold.of(context).openDrawer();
+                            },
+                            tooltip: 'Open menu',
+                          ),
                           Expanded(
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 8.0),
                               child: TextField(
                                 controller: _searchController,
-                                style: const TextStyle(color: HotspotTheme.buttonTextColor),
+                                style: const TextStyle(
+                                    color: HotspotTheme.buttonTextColor),
                                 textAlignVertical: TextAlignVertical.center,
                                 decoration: const InputDecoration(
                                   hintText: 'Search location...',
                                   hintStyle: TextStyle(color: Colors.grey),
                                   border: InputBorder.none,
-                                  suffixIcon: Icon(Icons.search, color: HotspotTheme.accentColor),
+                                  suffixIcon: Icon(Icons.search,
+                                      color: HotspotTheme.accentColor),
                                 ),
                               ),
-                            ),
-                          ),
-                          Container(
-                            height: 56,
-                            width: 40,
-                            decoration: const BoxDecoration(
-                              border: Border(
-                                left: BorderSide(color: Colors.grey, width: 0.5),
-                              ),
-                            ),
-                            child: IconButton(
-                              icon: const Icon(Icons.filter_list, color: HotspotTheme.accentColor),
-                              onPressed: () => _showFilterBottomSheet(viewModel),
-                              tooltip: 'Filter options',
                             ),
                           ),
                         ],
@@ -1169,7 +1372,8 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
                               return ListTile(
                                 title: Text(
                                   suggestion['description'],
-                                  style: const TextStyle(color: HotspotTheme.buttonTextColor),
+                                  style: const TextStyle(
+                                      color: HotspotTheme.buttonTextColor),
                                 ),
                                 onTap: () {
                                   FocusScope.of(context).unfocus();
@@ -1183,71 +1387,92 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
                   ],
                 ),
               ),
-              Positioned(
-                bottom: 100,
-                right: 7,
-                child: FloatingActionButton(
-                  heroTag: 'mapType',
-                  onPressed: _toggleMapType,
-                  mini: true,
-                  backgroundColor: HotspotTheme.textColor,
-                  child: Icon(
-                    _mapType == MapType.normal ? Icons.satellite : Icons.map,
-                    color: HotspotTheme.accentColor,
+              if (viewModel.showActionButtons) ...[
+                Positioned(
+                  bottom: 20,
+                  right: 7,
+                  child: FloatingActionButton(
+                    heroTag: 'clear',
+                    mini: true,
+                    backgroundColor: HotspotTheme.textColor,
+                    onPressed: () {
+                      viewModel.clearSelection();
+                    },
+                    child: const Icon(Icons.remove_circle_outline,
+                        color: HotspotTheme.accentColor),
                   ),
                 ),
-              ),
-              Positioned(
-                bottom: 150,
-                right: 7,
-                child: FloatingActionButton(
-                  heroTag: 'list',
-                  mini: true,
-                  backgroundColor: HotspotTheme.textColor,
-                  onPressed: () => _showSuggestedListDialog(viewModel),
-                  child: const Icon(Icons.list, color: HotspotTheme.accentColor),
+                Positioned(
+                  bottom: 70,
+                  right: 7,
+                  child: FloatingActionButton(
+                    heroTag: 'mapType',
+                    onPressed: _toggleMapType,
+                    mini: true,
+                    backgroundColor: HotspotTheme.textColor,
+                    child: Icon(
+                      _mapType == MapType.normal ? Icons.satellite : Icons.map,
+                      color: HotspotTheme.accentColor,
+                    ),
+                  ),
                 ),
-              ),
-              Positioned(
-                bottom: 200,
-                right: 7,
-                child: FloatingActionButton(
-                  heroTag: 'clear',
-                  mini: true,
-                  backgroundColor: HotspotTheme.textColor,
-                  onPressed: () {
-                    viewModel.clearSelection();
-                  },
-                  child: const Icon(Icons.remove_circle_outline, color: HotspotTheme.accentColor),
+                Positioned(
+                  bottom: 120,
+                  right: 7,
+                  child: FloatingActionButton(
+                    heroTag: 'list',
+                    mini: true,
+                    backgroundColor: HotspotTheme.textColor,
+                    onPressed: () => _showSuggestedListDialog(viewModel),
+                    child:
+                        const Icon(Icons.list, color: HotspotTheme.accentColor),
+                  ),
                 ),
-              ),
-              Positioned(
-                bottom: 250,
-                right: 7,
-                child: FloatingActionButton(
-                  heroTag: 'analytics',
-                  mini: true,
-                  backgroundColor: HotspotTheme.textColor,
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => AnalyticsScreen()),
-                    );
-                  },
-                  child: const Icon(Icons.analytics, color: HotspotTheme.accentColor),
+                Positioned(
+                  bottom: 170,
+                  right: 7,
+                  child: FloatingActionButton(
+                    heroTag: 'analytics',
+                    mini: true,
+                    backgroundColor: HotspotTheme.textColor,
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => AnalyticsScreen()),
+                      );
+                    },
+                    child: const Icon(Icons.analytics,
+                        color: HotspotTheme.accentColor),
+                  ),
                 ),
-              ),
-              Positioned(
-                bottom: 300, // Add logout button above analytics
-                right: 7,
-                child: FloatingActionButton(
-                  heroTag: 'logout',
-                  mini: true,
-                  backgroundColor: HotspotTheme.textColor,
-                  onPressed: _logout,
-                  child: const Icon(Icons.logout, color: HotspotTheme.accentColor),
+                Positioned(
+                  bottom: 220,
+                  right: 7,
+                  child: FloatingActionButton(
+                    heroTag: 'filter',
+                    mini: true,
+                    backgroundColor: HotspotTheme.textColor,
+                    onPressed: () => _showFilterBottomSheet(viewModel),
+                    child: const Icon(Icons.filter_list,
+                        color: HotspotTheme.accentColor),
+                  ),
                 ),
-              ),
+              ],
+              // Positioned(
+              //   bottom: 350,
+              //   right: 7,
+              //   child: FloatingActionButton(
+              //     heroTag: 'logout',
+              //     mini: true,
+              //     backgroundColor: HotspotTheme.textColor,
+              //     onPressed: () {
+              //       _logout();
+              //       viewModel.clearSelection();
+              //     },
+              //     child: const Icon(Icons.logout, color: HotspotTheme.accentColor),
+              //   ),
+              // ),
               if (viewModel.selectedLocation != null)
                 Positioned(
                   bottom: 20,
@@ -1277,8 +1502,10 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
                                 ),
                               ),
                               IconButton(
-                                icon: const Icon(Icons.clear, color: HotspotTheme.primaryColor),
-                                onPressed: viewModel.clearSelectionForAdjustRadius,
+                                icon: const Icon(Icons.clear,
+                                    color: HotspotTheme.primaryColor),
+                                onPressed:
+                                    viewModel.clearSelectionForAdjustRadius,
                                 padding: EdgeInsets.zero,
                               ),
                             ],
@@ -1286,19 +1513,24 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
                           const SizedBox(height: 8),
                           Row(
                             children: [
-                              const Text('1 km', style: TextStyle(color: HotspotTheme.buttonTextColor)),
+                              const Text('1 km',
+                                  style: TextStyle(
+                                      color: HotspotTheme.buttonTextColor)),
                               Expanded(
                                 child: Slider(
                                   value: viewModel.radius,
                                   min: 1.0,
                                   max: 50.0,
                                   divisions: 49,
-                                  label: '${viewModel.radius.toStringAsFixed(1)} km',
+                                  label:
+                                      '${viewModel.radius.toStringAsFixed(1)} km',
                                   activeColor: HotspotTheme.accentColor,
                                   onChanged: viewModel.updateRadius,
                                 ),
                               ),
-                              const Text('50 km', style: TextStyle(color: HotspotTheme.buttonTextColor)),
+                              const Text('50 km',
+                                  style: TextStyle(
+                                      color: HotspotTheme.buttonTextColor)),
                             ],
                           ),
                           const SizedBox(height: 16),
@@ -1306,7 +1538,9 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
                             width: double.infinity,
                             height: 48,
                             child: ElevatedButton(
-                              onPressed: viewModel.isLoading ? null : viewModel.fetchHotspots,
+                              onPressed: viewModel.isLoading
+                                  ? null
+                                  : viewModel.fetchHotspots,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: HotspotTheme.accentColor,
                                 foregroundColor: HotspotTheme.buttonTextColor,
@@ -1342,6 +1576,8 @@ class _HotspotMapScreenState extends State<HotspotMapScreen> with TickerProvider
           );
         },
       ),
-    );
-  }
+    ),
+  );
+}
+
 }

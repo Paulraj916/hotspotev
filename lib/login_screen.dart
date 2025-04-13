@@ -15,58 +15,45 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
 
-  Future<void> _login() async {
-    print('Login button pressed.');
-    setState(() {
-      _isLoading = true;
-    });
+Future<void> _login() async {
+  print('Login button pressed.');
+  setState(() {
+    _isLoading = true;
+  });
 
-    const String correctEmail = 'admin@gmail.com';
-    const String correctPassword = '123456789';
+  const String correctEmail = 'admin@gmail.com';
+  const String correctPassword = 'hello123';
 
-    final String email = _emailController.text.trim();
-    final String password = _passwordController.text.trim();
-    print('Email entered: "$email", Password entered: "$password"');
+  final String email = _emailController.text.trim();
+  final String password = _passwordController.text.trim();
+  print('Email entered: "$email", Password entered: "$password"');
 
-    if (email == correctEmail && password == correctPassword) {
-      print('Credentials match. Attempting to save login state...');
-      try {
-        final prefs = await SharedPreferences.getInstance();
-        print('SharedPreferences instance obtained.');
-        await prefs.setBool('isLoggedIn', true);
-        print('Login state saved: isLoggedIn = true');
+  if (email == correctEmail && password == correctPassword) {
+    print('Credentials match. Attempting to save login state...');
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      print('SharedPreferences instance obtained.');
+      await prefs.setBool('isLoggedIn', true);
+      await prefs.setString('userEmail', email); // Save email
+      print('Login state saved: isLoggedIn = true, userEmail = $email');
 
-        if (!mounted) {
-          print('Widget not mounted, aborting navigation.');
-          return;
-        }
-
-        print('Navigating to HotspotMapScreen...');
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HotspotMapScreen()),
-        );
-      } catch (e) {
-        print('Error with SharedPreferences: $e');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Error saving login state: $e',
-                style: TextStyle(color: HotspotTheme.buttonTextColor),
-              ),
-              backgroundColor: HotspotTheme.hotspotLowScoreColor,
-            ),
-          );
-        }
+      if (!mounted) {
+        print('Widget not mounted, aborting navigation.');
+        return;
       }
-    } else {
-      print('Credentials do not match.');
+
+      print('Navigating to HotspotMapScreen...');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HotspotMapScreen()),
+      );
+    } catch (e) {
+      print('Error with SharedPreferences: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Invalid email or password',
+              'Error saving login state: $e',
               style: TextStyle(color: HotspotTheme.buttonTextColor),
             ),
             backgroundColor: HotspotTheme.hotspotLowScoreColor,
@@ -74,14 +61,27 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     }
-
+  } else {
+    print('Credentials do not match.');
     if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Invalid email or password',
+            style: TextStyle(color: HotspotTheme.buttonTextColor),
+          ),
+          backgroundColor: HotspotTheme.hotspotLowScoreColor,
+        ),
+      );
     }
   }
 
+  if (mounted) {
+    setState(() {
+      _isLoading = false;
+    });
+  }
+}
   @override
   void dispose() {
     _emailController.dispose();

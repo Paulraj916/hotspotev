@@ -18,6 +18,8 @@ class HotspotViewModel extends ChangeNotifier {
   double _radius = 5.0;
   bool _isLoading = false;
   HotspotResponse? _hotspotResponse;
+  bool _showActionButtons = false;
+  bool get showActionButtons => _showActionButtons;
 
   bool _showSuggested = true;
   bool _showExisting = true;
@@ -42,15 +44,19 @@ class HotspotViewModel extends ChangeNotifier {
   Future<BitmapDescriptor> getCustomMarker(double score,
       {bool isCharger = false}) async {
     Color primaryColor;
-if (isCharger) {
-  primaryColor = const Color.fromARGB(255, 81, 45, 198); // Deep Purple for chargers
-} else if (score >= 7) {
-  primaryColor = const Color.fromARGB(255, 46, 201, 62); // Forest Green for high scores
-} else if (score >= 4) {
-  primaryColor = const Color.fromARGB(255, 255, 179, 0); // Amber Yellow for medium scores
-} else {
-  primaryColor = const Color.fromARGB(255, 235, 64, 52); // Bright Red for low scores
-}
+    if (isCharger) {
+      primaryColor =
+          const Color.fromARGB(255, 22, 119, 255); // Deep Purple for chargers
+    } else if (score >= 7) {
+      primaryColor = const Color.fromARGB(
+          255, 82, 196, 26); // Forest Green for high scores
+    } else if (score >= 4) {
+      primaryColor = const Color.fromARGB(
+          255, 250, 173, 20); // Amber Yellow for medium scores
+    } else {
+      primaryColor =
+          const Color.fromARGB(255, 255, 77, 79); // Bright Red for low scores
+    }
 
     final double width = 150;
     final double height = 150;
@@ -167,6 +173,7 @@ if (isCharger) {
     _selectedLocation = null;
     _radius = 5.0;
     _hotspotResponse = null;
+    _showActionButtons = false; // Hide action buttons
     notifyListeners();
   }
 
@@ -214,10 +221,12 @@ if (isCharger) {
           markerId: const MarkerId('selected'),
           position: _selectedLocation!,
           infoWindow: const InfoWindow(title: 'Selected Location'),
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
+          icon:
+              BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
         ),
       );
       _updateRadiusCircle();
+      _showActionButtons = true; 
     } catch (e) {
       print('Error fetching hotspots: $e');
     }
@@ -225,7 +234,6 @@ if (isCharger) {
     _isLoading = false;
     // clearSelectionForAdjustRadius();
     notifyListeners();
-    
   }
 
   void applyFilters({

@@ -57,14 +57,14 @@ class _SplashScreenState extends State<SplashScreen> {
           children: [
             const Icon(
               Icons.electric_car,
-              size: 100,
+              size: 80,
               color: HotspotTheme.primaryColor,
             ),
             const SizedBox(height: 20),
             Text(
-              'EV Hotspot Finder',
+              'Iris Spot ',
               style: TextStyle(
-                fontSize: 28,
+                fontSize: 50,
                 fontWeight: FontWeight.bold,
                 color: HotspotTheme.primaryColor,
               ),
