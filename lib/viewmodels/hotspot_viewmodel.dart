@@ -2,8 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:hotspot/main.dart';
-import 'hotspot_model.dart';
-import 'hotspot_repository.dart';
+import '../models/hotspot_model.dart';
+import '../repository/hotspot_repository.dart';
 import 'dart:math';
 import 'dart:ui';
 

@@ -1,6 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:hotspot/hotspot_model.dart';
+import 'package:hotspot/models/hotspot_model.dart';
 import 'package:hotspot/main.dart';
 
 class RatingBarChartSuggested extends StatelessWidget {

@@ -1,5 +1,5 @@
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:hotspot/hotspot_model.dart';
+import 'package:hotspot/models/hotspot_model.dart';
 
 class NearbyChargersRequest {
   final Source source;

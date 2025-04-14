@@ -1,12 +1,13 @@
+// main.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'hotspot_view.dart';
-import 'hotspot_viewmodel.dart';
-import 'hotspot_repository.dart';
-import 'api_client.dart';
-import 'splash_screen.dart';
-import 'nearby_chargers_viewmodel.dart'; // Import new view model
-import 'nearby_chargers_repository.dart'; // Import new repository
+import 'screens/hotspot_view.dart';
+import 'viewmodels/hotspot_viewmodel.dart';
+import 'repository/hotspot_repository.dart';
+import 'api_client/api_client.dart';
+import 'screens/splash_screen.dart';
+import 'viewmodels/nearby_chargers_viewmodel.dart'; // Import new view model
+import 'repository/nearby_chargers_repository.dart'; // Import new repository
 
 void main() {
   runApp(

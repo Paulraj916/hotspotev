@@ -2,8 +2,8 @@
 import 'dart:convert';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
-import 'hotspot_model.dart';
-import 'nearby_chargers_model.dart'; // Import the new model
+import '../models/hotspot_model.dart';
+import '../models/nearby_chargers_model.dart'; // Import the new model
 
 class ApiClient {
   static const String baseUrl = 'https://hotspot-backend-three.vercel.app';

@@ -3,10 +3,10 @@ import 'dart:math';
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:hotspot/hotspot_model.dart';
+import 'package:hotspot/models/hotspot_model.dart';
 import 'package:hotspot/main.dart';
-import 'package:hotspot/nearby_chargers_model.dart';
-import 'package:hotspot/nearby_chargers_viewmodel.dart';
+import 'package:hotspot/models/nearby_chargers_model.dart';
+import 'package:hotspot/viewmodels/nearby_chargers_viewmodel.dart';
 
 class SuggestedPlacesInteractiveChart extends StatefulWidget {
   final List<SuggestedHotspot> suggestedStations;

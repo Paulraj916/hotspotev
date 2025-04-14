@@ -1,7 +1,7 @@
 // EVStationStackedBarChart.dart
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:hotspot/hotspot_model.dart';
+import 'package:hotspot/models/hotspot_model.dart';
 import 'package:hotspot/main.dart';
 
 class EVStationStackedBarChart extends StatelessWidget {
@@ -76,75 +76,67 @@ class EVStationStackedBarChart extends StatelessWidget {
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
+              reservedSize: 50,
               getTitlesWidget: (double value, TitleMeta meta) {
                 final index = value.toInt();
-                if (index < brands.length) {
-                  return Transform.rotate(
-                    angle: -30 * 3.14159 / 180,
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 15.0),
-                      child: Text(
-                        (() {
-                          final words = brands[index].split(' ');
-                          final firstWord = words.isNotEmpty ? words[0] : '';
-                          final secondWord = words.length > 1
-                              ? words[1]
-                                  .substring(0, words[1].length.clamp(0, 12))
-                              : '';
-                          return '$firstWord\n$secondWord';
-                        })(),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color:
-                              HotspotTheme.textColor,
-                        ),
-                        textAlign: TextAlign.center,
+                if (index >= brands.length) return const SizedBox.shrink();
+
+                final brand = brands[index];
+                return Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: Transform.rotate(
+                    angle: -40 * 3.14159 / 180, // less aggressive rotation
+                    child: Text(
+                      brand,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: HotspotTheme.textColor,
                       ),
+                      textAlign: TextAlign.center,
                     ),
-                  );
-                }
-                return const Text('');
+                  ),
+                );
               },
-              reservedSize: 60,
             ),
           ),
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 40,
+              reservedSize: 36,
               getTitlesWidget: (value, meta) => Text(
-                value.toString(),
+                value.toInt().toString(),
                 style: TextStyle(
-                  color: HotspotTheme.textColor, // Apply theme text color
-                  fontSize: 12,
+                  color: HotspotTheme.textColor,
+                  fontSize: 11,
                 ),
               ),
             ),
           ),
-          topTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
         ),
         borderData: FlBorderData(show: false),
         barGroups: List.generate(brands.length, (index) {
           final brand = brands[index];
           final connectorData = data[brand]!;
-          final connectorTypes = connectorData.keys.toList();
 
           double fromY = 0;
-          List<BarChartRodStackItem> stackItems = [];
-
-          for (var type in connectorTypes) {
-            final count = connectorData[type]!;
-            if (count > 0) {
-              final toY = fromY + count;
-              stackItems.add(
-                BarChartRodStackItem(fromY, toY, connectorColors[type]!),
-              );
-              fromY = toY;
-            }
-          }
+          final stackItems = connectorData.entries
+              .where((entry) => entry.value > 0)
+              .map((entry) {
+            final toY = fromY + entry.value;
+            final item = BarChartRodStackItem(
+              fromY,
+              toY,
+              connectorColors[entry.key]!,
+            );
+            fromY = toY;
+            return item;
+          }).toList();
 
           return BarChartGroupData(
             x: index,
@@ -152,8 +144,8 @@ class EVStationStackedBarChart extends StatelessWidget {
               BarChartRodData(
                 toY: fromY,
                 rodStackItems: stackItems,
-                width: 20,
-                borderRadius: BorderRadius.circular(4),
+                width: 18,
+                borderRadius: BorderRadius.circular(3),
               ),
             ],
             showingTooltipIndicators: [],
@@ -162,24 +154,22 @@ class EVStationStackedBarChart extends StatelessWidget {
         barTouchData: BarTouchData(
           enabled: true,
           touchTooltipData: BarTouchTooltipData(
-            tooltipBgColor:
-                HotspotTheme.textColor.withOpacity(0.8), // Apply theme
+            tooltipBgColor: HotspotTheme.textColor.withOpacity(0.85),
             getTooltipItem: (group, groupIndex, rod, rodIndex) {
               final brand = brands[group.x.toInt()];
               final connectorData = data[brand]!;
               final totalCount =
                   connectorData.values.reduce((sum, count) => sum + count);
 
-              String details = '';
-              connectorData.forEach((type, count) {
-                if (count > 0) details += '$type: $count\n';
-              });
+              final details = connectorData.entries
+                  .where((entry) => entry.value > 0)
+                  .map((entry) => '${entry.key}: ${entry.value}')
+                  .join('\n');
 
               return BarTooltipItem(
                 '$brand: $totalCount total\n$details',
                 TextStyle(
-                  color: HotspotTheme
-                      .backgroundColor, // Contrast with tooltip background
+                  color: HotspotTheme.backgroundColor,
                   fontSize: 12,
                 ),
               );

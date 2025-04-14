@@ -1,8 +1,8 @@
 // nearby_chargers_viewmodel.dart
 import 'package:flutter/material.dart';
-import 'nearby_chargers_model.dart';
-import 'nearby_chargers_repository.dart';
-import 'hotspot_model.dart';
+import '../models/nearby_chargers_model.dart';
+import '../repository/nearby_chargers_repository.dart';
+import '../models/hotspot_model.dart';
 
 class NearbyChargersViewModel extends ChangeNotifier {
   final NearbyChargersRepository repository;

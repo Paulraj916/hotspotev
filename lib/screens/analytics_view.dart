@@ -12,11 +12,14 @@ import 'package:hotspot/analytics/RatingBarChartSuggested.dart';
 import 'package:hotspot/analytics/SuggestedPlacesInteractiveChart.dart';
 import 'package:hotspot/analytics/SuggestedRatingVsReviewChart.dart';
 import 'package:hotspot/analytics/WeightVsRatingBarChart.dart';
+import 'package:hotspot/analytics/linkedChart/NearbyChargersChart.dart';
+import 'package:hotspot/analytics/linkedChart/SuggestedPlacesChart.dart';
+import 'package:hotspot/models/nearby_chargers_model.dart';
 import 'package:provider/provider.dart';
-import 'hotspot_viewmodel.dart';
-import 'hotspot_model.dart';
-import 'main.dart';
-import 'nearby_chargers_viewmodel.dart';
+import '../viewmodels/hotspot_viewmodel.dart';
+import '../models/hotspot_model.dart';
+import '../main.dart';
+import '../viewmodels/nearby_chargers_viewmodel.dart';
 
 class AnalyticsScreen extends StatelessWidget {
   const AnalyticsScreen({super.key});
@@ -197,23 +200,49 @@ class AnalyticsScreen extends StatelessWidget {
                     height: 350,
                   ),
                   const SizedBox(height: 20),
-                  _buildChartContainer(
-                    context,
-                    title:
-                        'Interactive Suggested Places (Click to See Nearby Chargers)',
-                    chart: SuggestedPlacesInteractiveChart(
-                      suggestedStations: suggestedStations,
-                      evStations: evStations,
-                      nearbyChargersViewModel: nearbyChargersViewModel,
-                    ),
-                    legendItems: [
-                      LegendItem(color: Colors.cyan, label: 'Suggested Place'),
-                      LegendItem(color: Colors.amber, label: 'Selected Place'),
-                      LegendItem(color: Colors.purple, label: 'Nearby Charger'),
-                    ],
-                    height: 700, // Adjusted height for both charts
-                  ),
-                  const SizedBox(height: 10),
+_buildChartContainer(
+  context,
+  title: 'Suggested Places (Click to See Nearby Chargers)',
+  chart: SuggestedPlacesChart(
+    suggestedStations: suggestedStations,
+    onBarSelected: (index, station) {
+      if (index >= 0) {
+        // Fetch nearby chargers
+        final source = Source(
+          latitude: station.lat ?? 0.0,
+          longitude: station.lng ?? 0.0,
+          locationName: station.displayName,
+        );
+        nearbyChargersViewModel.fetchNearbyChargers(
+          source: source,
+          evChargers: evStations,
+        );
+      } else {
+        // Clear selection
+        nearbyChargersViewModel.clear();
+      }
+    },
+  ),
+  legendItems: [
+    LegendItem(color: Colors.cyan, label: 'Suggested Place'),
+    LegendItem(color: Colors.amber, label: 'Selected Place'),
+  ],
+  height: 350,
+),
+
+const SizedBox(height: 20),
+_buildChartContainer(
+  context,
+  title: 'Nearby Chargers for Selected Place',
+  chart: NearbyChargersChart(
+    viewModel: nearbyChargersViewModel,
+    selectedStationName: nearbyChargersViewModel.nearbyChargersResponse?.source.locationName,
+  ),
+  legendItems: [
+    LegendItem(color: Colors.purple, label: 'Nearby Charger'),
+  ],
+  height: 350,
+),
                 ],
               ),
             ),

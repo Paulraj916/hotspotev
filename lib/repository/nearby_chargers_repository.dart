@@ -1,6 +1,6 @@
 // nearby_chargers_repository.dart
-import 'api_client.dart';
-import 'nearby_chargers_model.dart';
+import '../api_client/api_client.dart';
+import '../models/nearby_chargers_model.dart';
 
 class NearbyChargersRepository {
   final ApiClient apiClient;

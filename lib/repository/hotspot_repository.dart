@@ -1,6 +1,6 @@
 // hotspot_repository.dart
-import 'hotspot_model.dart';
-import 'api_client.dart';
+import '../models/hotspot_model.dart';
+import '../api_client/api_client.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class HotspotRepository {
