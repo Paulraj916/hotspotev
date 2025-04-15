@@ -1,4 +1,4 @@
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+// nearby_chargers_model.dart
 import 'package:hotspot/models/hotspot_model.dart';
 
 class NearbyChargersRequest {

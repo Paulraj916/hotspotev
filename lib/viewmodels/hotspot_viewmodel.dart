@@ -1,11 +1,14 @@
 // hotspot_viewmodel.dart
+import 'dart:async';
+import 'dart:math';
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:hotspot/main.dart';
+
 import '../models/hotspot_model.dart';
 import '../repository/hotspot_repository.dart';
-import 'dart:math';
-import 'dart:ui';
 
 class HotspotViewModel extends ChangeNotifier {
   final HotspotRepository repository;
@@ -41,8 +44,11 @@ class HotspotViewModel extends ChangeNotifier {
   RangeValues get scoreRange => _scoreRange;
   RangeValues get ratingRange => _ratingRange;
 
-  Future<BitmapDescriptor> getCustomMarker(double score,
-      {bool isCharger = false}) async {
+  Future<BitmapDescriptor> getCustomMarker(
+    double score, {
+    bool isCharger = false,
+    double sizeMultiplier = 1.0,
+  }) async {
     Color primaryColor;
     if (isCharger) {
       primaryColor =
@@ -58,16 +64,16 @@ class HotspotViewModel extends ChangeNotifier {
           const Color.fromARGB(255, 255, 77, 79); // Bright Red for low scores
     }
 
-    final double width = 150;
-    final double height = 150;
-    final double strokeWidth = 25.0;
-    final size = 100;
+    final baseSize = 150.0;
+    final width = baseSize * sizeMultiplier;
+    final height = baseSize * sizeMultiplier;
+    final strokeWidth = 25.0 * sizeMultiplier;
+    final size = 100.0 * sizeMultiplier;
 
     final pictureRecorder = PictureRecorder();
     final canvas = Canvas(pictureRecorder);
 
     final double borderWidth = size * 0.1;
-    final borderPaint = Paint()..color = Colors.white;
     final circlePaint = Paint()..color = primaryColor;
 
     Paint paint = Paint()
@@ -90,11 +96,11 @@ class HotspotViewModel extends ChangeNotifier {
     if (isCharger) {
       // Draw a charge icon (lightning bolt)
       final iconPainter = TextPainter(
-        text: const TextSpan(
+        text: TextSpan(
           text: '⚡', // Lightning bolt symbol
           style: TextStyle(
             color: Colors.white,
-            fontSize: 40,
+            fontSize: 40 * sizeMultiplier,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -112,9 +118,9 @@ class HotspotViewModel extends ChangeNotifier {
       final textPainter = TextPainter(
         text: TextSpan(
           text: text,
-          style: const TextStyle(
+          style: TextStyle(
             color: Colors.white,
-            fontSize: 30,
+            fontSize: 30 * sizeMultiplier,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -135,6 +141,38 @@ class HotspotViewModel extends ChangeNotifier {
     final BitmapDescriptor bitmap =
         BitmapDescriptor.fromBytes(byteData!.buffer.asUint8List());
     return bitmap;
+  }
+
+  /// Animates a marker to simulate a bouncing effect
+  void bounceMarker(String markerId, double score,
+      {bool isCharger = false}) async {
+    const bounceCount = 10;
+    const bounceDuration = Duration(milliseconds: 800);
+
+    for (int i = 0; i < bounceCount * 2; i++) {
+      final sizeMultiplier =
+          i % 2 == 0 ? 1.1 : 1.0; // Toggle between larger and normal size
+      final marker = _markers.firstWhere(
+        (m) => m.markerId.value == markerId,
+        orElse: () => throw Exception('Marker not found'),
+      );
+
+      final newIcon = await getCustomMarker(
+        score,
+        isCharger: isCharger,
+        sizeMultiplier: sizeMultiplier,
+      );
+
+      _markers.removeWhere((m) => m.markerId.value == markerId);
+      _markers.add(
+        marker.copyWith(
+          iconParam: newIcon,
+        ),
+      );
+
+      notifyListeners();
+      await Future.delayed(bounceDuration);
+    }
   }
 
   void setTapCallbacks({
@@ -173,7 +211,7 @@ class HotspotViewModel extends ChangeNotifier {
     _selectedLocation = null;
     _radius = 5.0;
     _hotspotResponse = null;
-    _showActionButtons = false; // Hide action buttons
+    _showActionButtons = false;
     notifyListeners();
   }
 
@@ -226,13 +264,14 @@ class HotspotViewModel extends ChangeNotifier {
         ),
       );
       _updateRadiusCircle();
-      _showActionButtons = true; 
+      _showActionButtons = true;
     } catch (e) {
       print('Error fetching hotspots: $e');
     }
     await Future.delayed(const Duration(seconds: 1));
     _isLoading = false;
     // clearSelectionForAdjustRadius();
+    // await Future.delayed(const Duration(seconds: 1));
     notifyListeners();
   }
 
@@ -318,12 +357,6 @@ class HotspotViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  double _getMarkerColor(double score) {
-    if (score >= 7) return BitmapDescriptor.hueGreen;
-    if (score >= 4) return BitmapDescriptor.hueYellow;
-    return BitmapDescriptor.hueRed;
-  }
-
   void setFilters({
     required bool showSuggested,
     required bool showExisting,
@@ -400,7 +433,9 @@ class HotspotViewModel extends ChangeNotifier {
   }
 
   Future<List<dynamic>> fetchPlaceSuggestions(
-      String input, String sessionToken) async {
+    String input,
+    String sessionToken,
+  ) async {
     try {
       return await repository.fetchPlaceSuggestions(input, sessionToken);
     } catch (e) {

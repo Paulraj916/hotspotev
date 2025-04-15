@@ -16,8 +16,8 @@ class NearbyDistanceBarChart extends StatelessWidget {
             s.nearestChargeStationDetail != null &&
             s.nearestChargeStationDetail!.isNotEmpty)
         .toList()
-      ..sort((a, b) => b.nearestChargeStationDetail!.first.distance
-          .compareTo(a.nearestChargeStationDetail!.first.distance));
+      ..sort((a, b) => a.nearestChargeStationDetail!.first.distance
+          .compareTo(b.nearestChargeStationDetail!.first.distance));
 
     final maxY = sortedStations.isNotEmpty
         ? sortedStations
@@ -53,7 +53,7 @@ class NearbyDistanceBarChart extends StatelessWidget {
                         label,
                         style: TextStyle(
                           fontSize: 12,
-                          color: HotspotTheme.textColor,
+                          color: HotspotTheme.backgroundColor,
                         ),
                         textAlign: TextAlign.center,
                         overflow: TextOverflow.ellipsis,
@@ -72,9 +72,9 @@ class NearbyDistanceBarChart extends StatelessWidget {
               showTitles: true,
               reservedSize: 40,
               getTitlesWidget: (value, meta) => Text(
-                value.toString(),
+                (value/1000).toString(),
                 style: TextStyle(
-                  color: HotspotTheme.textColor, // Apply theme text color
+                  color: HotspotTheme.backgroundColor, // Apply theme text color
                   fontSize: 12,
                 ),
               ),
@@ -112,7 +112,7 @@ class NearbyDistanceBarChart extends StatelessWidget {
             getTooltipItem: (group, groupIndex, rod, rodIndex) {
               final station = sortedStations[group.x.toInt()];
               return BarTooltipItem(
-                '${station.displayName}\nDistance: ${station.nearestChargeStationDetail!.first.distance.toStringAsFixed(2)} m',
+                '${station.displayName}\nDistance: ${((station.nearestChargeStationDetail!.first.distance)/1000).toStringAsFixed(2)} km',
                 TextStyle(
                   color: HotspotTheme
                       .backgroundColor, // Contrast with tooltip background

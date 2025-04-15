@@ -1,3 +1,4 @@
+// hotspot_view.dart
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
@@ -102,6 +103,7 @@ class _HotspotMapScreenState extends State<HotspotMapScreen>
         CameraUpdate.newLatLngZoom(viewModel.selectedLocation!, 12),
       );
       setState(() {
+        _searchController.clear();
         _placeSuggestions = [];
       });
     } catch (e) {
@@ -243,8 +245,8 @@ class _HotspotMapScreenState extends State<HotspotMapScreen>
                       heroTag: 'list',
                       mini: true,
                       backgroundColor: HotspotTheme.textColor,
-                      onPressed: () =>
-                          showSuggestedListDialog(context, viewModel, _tabController),
+                      onPressed: () => showSuggestedListDialog(
+                          context, viewModel, _tabController,_controller),
                       child: const Icon(Icons.list,
                           color: HotspotTheme.accentColor),
                     ),
@@ -274,11 +276,43 @@ class _HotspotMapScreenState extends State<HotspotMapScreen>
                       heroTag: 'filter',
                       mini: true,
                       backgroundColor: HotspotTheme.textColor,
-                      onPressed: () => showFilterBottomSheet(context, viewModel),
+                      onPressed: () =>
+                          showFilterBottomSheet(context, viewModel),
                       child: const Icon(Icons.filter_list,
                           color: HotspotTheme.accentColor),
                     ),
                   ),
+                  Positioned(
+                    bottom: 20,
+                    left: 10,
+                    child: Card(
+                      color: Colors.white.withOpacity(0.85),
+                      elevation: 4,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Legend',
+                              style: TextStyle(
+                                color: HotspotTheme.backgroundGrey,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            _buildLegendItem(HotspotTheme.chargerColor, 'EV Stations'),
+                            _buildLegendItem(HotspotTheme.hotspotHighScoreColor, 'Score ≥ 7'),
+                            _buildLegendItem(HotspotTheme.hotspotMediumScoreColor, 'Score 4 < 7'),
+                            _buildLegendItem(HotspotTheme.hotspotLowScoreColor, 'Score < 4'),
+                          ],
+                        ),
+                      ),
+                    ),
+                  )
                 ],
                 if (viewModel.selectedLocation != null)
                   _buildRadiusAdjuster(viewModel),
@@ -287,6 +321,26 @@ class _HotspotMapScreenState extends State<HotspotMapScreen>
           },
         ),
       ),
+    );
+  }
+
+  Widget _buildLegendItem(Color color, String label) {
+    return Row(
+      children: [
+        Container(
+          width: 16,
+          height: 16,
+          margin: const EdgeInsets.only(right: 8),
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
+        ),
+        Text(
+          label,
+          style: const TextStyle(color: Colors.black87),
+        ),
+      ],
     );
   }
 
@@ -316,7 +370,8 @@ class _HotspotMapScreenState extends State<HotspotMapScreen>
                   hintText: 'Search location...',
                   hintStyle: TextStyle(color: Colors.grey),
                   border: InputBorder.none,
-                  suffixIcon: Icon(Icons.search, color: HotspotTheme.accentColor),
+                  suffixIcon:
+                      Icon(Icons.search, color: HotspotTheme.accentColor),
                 ),
               ),
             ),
@@ -388,7 +443,8 @@ class _HotspotMapScreenState extends State<HotspotMapScreen>
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.clear, color: HotspotTheme.primaryColor),
+                    icon: const Icon(Icons.clear,
+                        color: HotspotTheme.primaryColor),
                     onPressed: viewModel.clearSelectionForAdjustRadius,
                     padding: EdgeInsets.zero,
                   ),
@@ -422,7 +478,7 @@ class _HotspotMapScreenState extends State<HotspotMapScreen>
                   onPressed: viewModel.isLoading ? null : viewModel.fetchHotspots,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: HotspotTheme.accentColor,
-                    foregroundColor: HotspotTheme.buttonTextColor,
+                    foregroundColor: HotspotTheme.textColor,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -433,7 +489,7 @@ class _HotspotMapScreenState extends State<HotspotMapScreen>
                           width: 24,
                           height: 24,
                           child: CircularProgressIndicator(
-                            color: HotspotTheme.buttonTextColor,
+                            color: HotspotTheme.accentColor,
                             strokeWidth: 2.5,
                           ),
                         )

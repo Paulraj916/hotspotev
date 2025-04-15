@@ -16,12 +16,12 @@ class EVStationRatingVsReviewChart extends StatelessWidget {
     final sortedStations = [...evStations]
       ..sort((a, b) => (b.rating ?? 0).compareTo(a.rating ?? 0));
 
-    final maxRating = sortedStations.isNotEmpty
-        ? sortedStations.map((s) => s.rating ?? 0).reduce(max) + 1
-        : 5.0;
+    // final maxRating = sortedStations.isNotEmpty
+    //     ? sortedStations.map((s) => s.rating ?? 0).reduce(max) + 1
+    //     : 5.0;
 
     final maxReviewCount = sortedStations.isNotEmpty
-        ? sortedStations.map((s) => s.userRatingCount ?? 0).reduce(max) + 1
+        ? sortedStations.map((s) => s.userRatingCount ).reduce(max) + 1
         : 5.0;
 
     return SizedBox(
@@ -45,7 +45,7 @@ class EVStationRatingVsReviewChart extends StatelessWidget {
                 getTitlesWidget: (value, meta) => Text(
                   value.toString(),
                   style: TextStyle(
-                    color: HotspotTheme.textColor, // Apply theme text color
+                    color: HotspotTheme.backgroundColor, // Apply theme text color
                     fontSize: 12,
                   ),
                 ),
@@ -75,7 +75,7 @@ class EVStationRatingVsReviewChart extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 12,
                             color: HotspotTheme
-                                .textColor, // Apply theme text color
+                                .backgroundColor, // Apply theme text color
                           ),
                           textAlign: TextAlign.center,
                           overflow: TextOverflow.ellipsis,
@@ -99,8 +99,8 @@ class EVStationRatingVsReviewChart extends StatelessWidget {
             final station = entry.value;
 
             final normalizedReviewCount =
-                station.userRatingCount != null && station.userRatingCount! > 0
-                    ? min((station.userRatingCount! / maxReviewCount) * 5, 5.0)
+                station.userRatingCount > 0
+                    ? min((station.userRatingCount / maxReviewCount) * 5, 5.0)
                     : 0.0;
 
             return BarChartGroupData(
@@ -133,7 +133,7 @@ class EVStationRatingVsReviewChart extends StatelessWidget {
                     rodIndex == 0 ? 'Rating' : 'Review Count';
                 final dynamic value = rodIndex == 0
                     ? (station.rating ?? 'N/A')
-                    : (station.userRatingCount ?? 'N/A');
+                    : (station.userRatingCount);
 
                 return BarTooltipItem(
                   '${station.displayName}\n$metricName: $value',

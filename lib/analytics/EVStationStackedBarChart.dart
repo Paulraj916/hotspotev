@@ -90,7 +90,7 @@ class EVStationStackedBarChart extends StatelessWidget {
                       brand,
                       style: TextStyle(
                         fontSize: 11,
-                        color: HotspotTheme.textColor,
+                        color: HotspotTheme.backgroundColor,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -106,7 +106,7 @@ class EVStationStackedBarChart extends StatelessWidget {
               getTitlesWidget: (value, meta) => Text(
                 value.toInt().toString(),
                 style: TextStyle(
-                  color: HotspotTheme.textColor,
+                  color: HotspotTheme.backgroundColor,
                   fontSize: 11,
                 ),
               ),

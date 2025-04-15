@@ -28,7 +28,7 @@ class RatingBarChartEV extends StatelessWidget {
               getTitlesWidget: (value, meta) => Text(
                 value.toString(),
                 style: TextStyle(
-                  color: HotspotTheme.textColor, // Apply theme text color
+                  color: HotspotTheme.backgroundColor, // Apply theme text color
                   fontSize: 12,
                 ),
               ),
@@ -56,7 +56,7 @@ class RatingBarChartEV extends StatelessWidget {
                         label,
                         style: TextStyle(
                           fontSize: 12,
-                          color: HotspotTheme.textColor,
+                          color: HotspotTheme.backgroundColor,
                         ),
                         textAlign: TextAlign.center,
                         overflow: TextOverflow.ellipsis,

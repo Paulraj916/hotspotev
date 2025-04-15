@@ -1,3 +1,4 @@
+// filter_bottom_sheet.dart
 import 'package:flutter/material.dart';
 
 import '../theme/hotspot_theme.dart';
@@ -239,7 +240,7 @@ Widget _buildApplyButton({
       },
       style: ElevatedButton.styleFrom(
         backgroundColor: HotspotTheme.accentColor,
-        foregroundColor: HotspotTheme.buttonTextColor,
+        foregroundColor: HotspotTheme.secondaryTextColor,
         padding: const EdgeInsets.symmetric(vertical: 12),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),

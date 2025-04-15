@@ -1,7 +1,6 @@
 // main.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'screens/hotspot_view.dart';
 import 'viewmodels/hotspot_viewmodel.dart';
 import 'repository/hotspot_repository.dart';
 import 'api_client/api_client.dart';
@@ -35,6 +34,7 @@ class HotspotTheme {
   static const Color accentColor = Colors.amber; // For ratings
   static const Color backgroundColor = Colors.white;
   static const Color buttonTextColor = Colors.white;
+  static const Color backgroundGrey =  Color.fromARGB(255, 56, 56, 56);
 
   // Marker-specific colors
   static const Color chargerColor = Colors.purple; // Fixed color for EV chargers

@@ -144,7 +144,7 @@ class _SuggestedPlacesInteractiveChartState
                     getTitlesWidget: (value, meta) => Text(
                       value.toString(),
                       style: TextStyle(
-                        color: HotspotTheme.textColor,
+                        color: HotspotTheme.backgroundColor,
                         fontSize: 12,
                       ),
                     ),
@@ -168,7 +168,7 @@ class _SuggestedPlacesInteractiveChartState
                             firstWord,
                             style: TextStyle(
                               fontSize: 12,
-                              color: HotspotTheme.textColor,
+                              color: HotspotTheme.backgroundColor,
                             ),
                             textAlign: TextAlign.center,
                             overflow: TextOverflow.ellipsis,

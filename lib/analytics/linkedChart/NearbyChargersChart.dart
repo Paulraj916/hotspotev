@@ -48,18 +48,19 @@ class NearbyChargersChart extends StatelessWidget {
   Widget _buildPlaceholderChart() {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Icon(
           Icons.bar_chart,
           size: 64,
-          color: HotspotTheme.primaryColor.withOpacity(0.3),
+          color: HotspotTheme.primaryColor.withOpacity(0.7),
         ),
         const SizedBox(height: 16),
         Text(
-          'Select a suggested place above to view nearby chargers',
+          'Select a suggested place above\n to view nearby chargers',
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: HotspotTheme.textColor.withOpacity(0.6),
+            color: HotspotTheme.backgroundColor.withOpacity(0.6),
             fontSize: 16,
             fontWeight: FontWeight.w500,
           ),
@@ -97,7 +98,7 @@ class NearbyChargersChart extends StatelessWidget {
                   getTitlesWidget: (value, meta) => Text(
                     value.toStringAsFixed(0),
                     style: TextStyle(
-                      color: HotspotTheme.textColor,
+                      color: HotspotTheme.backgroundColor,
                       fontSize: 12,
                     ),
                   ),
@@ -126,7 +127,7 @@ class NearbyChargersChart extends StatelessWidget {
                             firstWord,
                             style: TextStyle(
                               fontSize: 12,
-                              color: HotspotTheme.textColor,
+                              color: HotspotTheme.backgroundColor,
                             ),
                             textAlign: TextAlign.center,
                             overflow: TextOverflow.ellipsis,

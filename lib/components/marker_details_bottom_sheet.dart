@@ -1,3 +1,4 @@
+// markers_details_bottom_sheet.dart
 import 'dart:async'; // Added for Completer
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
@@ -95,13 +96,6 @@ Widget _buildHeader(
 Widget _buildRatingRow(SuggestedHotspot? hotspot, ExistingCharger? charger) {
   return Row(
     children: [
-      const Text(
-        'Rating: ',
-        style: TextStyle(
-          color: HotspotTheme.backgroundColor,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
       RatingBarIndicator(
         rating: hotspot?.rating ?? charger?.rating ?? 0,
         itemBuilder: (context, _) => const Icon(
@@ -112,9 +106,8 @@ Widget _buildRatingRow(SuggestedHotspot? hotspot, ExistingCharger? charger) {
         itemSize: 20.0,
         unratedColor: Colors.grey[300],
       ),
-      if (hotspot != null)
         Text(
-          '    (${hotspot.userRatingCount})',
+          ' ${hotspot?.rating ?? charger?.rating ?? 0} (${hotspot?.userRatingCount ?? charger?.userRatingCount ?? 0})',
           style: const TextStyle(
             color: HotspotTheme.backgroundColor,
             fontWeight: FontWeight.bold,
@@ -162,6 +155,7 @@ List<Widget> _buildHotspotDetails(SuggestedHotspot hotspot) {
           fontWeight: FontWeight.bold,
         ),
       ),
+      SizedBox(height: 10,),
       ...hotspot.nearestChargeStationDetail!.map((detail) {
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -188,6 +182,7 @@ List<Widget> _buildHotspotDetails(SuggestedHotspot hotspot) {
 
 List<Widget> _buildChargerDetails(ExistingCharger charger) {
   return [
+    SizedBox(height: 5,),
     DetailRow(
       label: 'Max Charge Rate',
       value: charger.evChargeOptions.maxChargeRate?.toString() ?? 'N/A',
@@ -209,7 +204,7 @@ List<Widget> _buildChargerDetails(ExistingCharger charger) {
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text(
-            charger.evChargeOptions.type ?? 'N/A',
+            charger.evChargeOptions.type ?? 'Type: N/A',
             style: const TextStyle(
               color: HotspotTheme.primaryColor,
               fontSize: 12,
@@ -238,26 +233,23 @@ Widget _buildGoogleMapsLink(
         );
       }
     },
-    child: Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'Google Maps Link',
-            style: TextStyle(
-              color: HotspotTheme.backgroundColor,
-              decoration: TextDecoration.underline,
-            ),
-          ),
-          const SizedBox(width: 6),
-          Icon(
-            Icons.north_east,
-            size: 14,
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'Google Maps Link',
+          style: TextStyle(
             color: HotspotTheme.backgroundColor,
+            decoration: TextDecoration.underline,
           ),
-        ],
-      ),
+        ),
+        const SizedBox(width: 6),
+        Icon(
+          Icons.north_east,
+          size: 14,
+          color: HotspotTheme.accentColor,
+        ),
+      ],
     ),
   );
 }

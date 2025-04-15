@@ -1,4 +1,4 @@
-import 'dart:math';
+// import 'dart:math';
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -11,12 +11,12 @@ class WeightVsRatingBarChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final maxValue = suggestedStations.isNotEmpty
-        ? suggestedStations
-                .map((s) => max((s.totalWeight ?? 0), (s.rating ?? 0)))
-                .reduce((a, b) => max(a, b)) +
-            1
-        : 10;
+    // final maxValue = suggestedStations.isNotEmpty
+    //     ? suggestedStations
+    //             .map((s) => max((s.totalWeight ?? 0), (s.rating ?? 0)))
+    //             .reduce((a, b) => max(a, b)) +
+    //         1
+    //     : 10;
 
     return BarChart(
       BarChartData(
@@ -30,7 +30,7 @@ class WeightVsRatingBarChart extends StatelessWidget {
               getTitlesWidget: (value, meta) => Text(
                 value.toString(),
                 style: TextStyle(
-                  color: HotspotTheme.textColor, // Apply theme text color
+                  color: HotspotTheme.backgroundColor, // Apply theme text color
                   fontSize: 12,
                 ),
               ),
@@ -61,7 +61,7 @@ class WeightVsRatingBarChart extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 12,
                           color:
-                              HotspotTheme.textColor, // Apply theme text color
+                              HotspotTheme.backgroundColor, // Apply theme text color
                         ),
                         textAlign: TextAlign.center,
                         overflow: TextOverflow.ellipsis,

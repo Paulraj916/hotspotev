@@ -28,7 +28,6 @@ class AnalyticsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: HotspotTheme.primaryColor),
           onPressed: () => Navigator.pop(context),
@@ -103,7 +102,6 @@ class AnalyticsScreen extends StatelessWidget {
                     legendItems: [
                       LegendItem(color: Colors.cyan, label: 'Suggested'),
                     ],
-                    
                   ),
                   const SizedBox(height: 20),
                   _buildChartContainer(
@@ -115,31 +113,27 @@ class AnalyticsScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  _buildChartContainer(
-                    context,
-                    title: 'Score vs Rating (Suggested)',
-                    chart: WeightVsRatingBarChart(
-                      suggestedStations: suggestedStations,
-                    ),
-                    legendItems: [
-                      LegendItem(color: Colors.cyan, label: 'Total Weight'),
-                      LegendItem(color: Colors.blue, label: 'Rating'),
-                    ],
-                    height: 380
-                  ),
+                  _buildChartContainer(context,
+                      title: 'Score vs Rating (Suggested)',
+                      chart: WeightVsRatingBarChart(
+                        suggestedStations: suggestedStations,
+                      ),
+                      legendItems: [
+                        LegendItem(color: Colors.cyan, label: 'Total Weight'),
+                        LegendItem(color: Colors.blue, label: 'Rating'),
+                      ],
+                      height: 380),
                   const SizedBox(height: 20),
-                  _buildChartContainer(
-                    context,
-                    title:
-                        'Nearby Distance (m) Between Suggested and Existing Chargers',
-                    chart: NearbyDistanceBarChart(
-                      suggestedStations: suggestedStations,
-                    ),
-                    legendItems: [
-                      LegendItem(color: Colors.red, label: 'Distance (m)'),
-                    ],
-                    height: 450
-                  ),
+                  _buildChartContainer(context,
+                      title:
+                          'Nearby Distance (km) Between Suggested and Existing Chargers',
+                      chart: NearbyDistanceBarChart(
+                        suggestedStations: suggestedStations,
+                      ),
+                      legendItems: [
+                        LegendItem(color: Colors.red, label: 'Distance (km)'),
+                      ],
+                      height: 450),
                   const SizedBox(height: 20),
                   _buildChartContainer(
                     context,
@@ -200,49 +194,49 @@ class AnalyticsScreen extends StatelessWidget {
                     height: 350,
                   ),
                   const SizedBox(height: 20),
-_buildChartContainer(
-  context,
-  title: 'Suggested Places (Click to See Nearby Chargers)',
-  chart: SuggestedPlacesChart(
-    suggestedStations: suggestedStations,
-    onBarSelected: (index, station) {
-      if (index >= 0) {
-        // Fetch nearby chargers
-        final source = Source(
-          latitude: station.lat ?? 0.0,
-          longitude: station.lng ?? 0.0,
-          locationName: station.displayName,
-        );
-        nearbyChargersViewModel.fetchNearbyChargers(
-          source: source,
-          evChargers: evStations,
-        );
-      } else {
-        // Clear selection
-        nearbyChargersViewModel.clear();
-      }
-    },
-  ),
-  legendItems: [
-    LegendItem(color: Colors.cyan, label: 'Suggested Place'),
-    LegendItem(color: Colors.amber, label: 'Selected Place'),
-  ],
-  height: 350,
-),
-
-const SizedBox(height: 20),
-_buildChartContainer(
-  context,
-  title: 'Nearby Chargers for Selected Place',
-  chart: NearbyChargersChart(
-    viewModel: nearbyChargersViewModel,
-    selectedStationName: nearbyChargersViewModel.nearbyChargersResponse?.source.locationName,
-  ),
-  legendItems: [
-    LegendItem(color: Colors.purple, label: 'Nearby Charger'),
-  ],
-  height: 350,
-),
+                  _buildChartContainer(
+                    context,
+                    title: 'Suggested Places (Click to See Nearby Chargers)',
+                    chart: SuggestedPlacesChart(
+                      suggestedStations: suggestedStations,
+                      onBarSelected: (index, station) {
+                        if (index >= 0) {
+                          // Fetch nearby chargers
+                          final source = Source(
+                            latitude: station.lat ?? 0.0,
+                            longitude: station.lng ?? 0.0,
+                            locationName: station.displayName,
+                          );
+                          nearbyChargersViewModel.fetchNearbyChargers(
+                            source: source,
+                            evChargers: evStations,
+                          );
+                        } else {
+                          // Clear selection
+                          nearbyChargersViewModel.clear();
+                        }
+                      },
+                    ),
+                    legendItems: [
+                      LegendItem(color: Colors.cyan, label: 'Suggested Place'),
+                      LegendItem(color: Colors.amber, label: 'Selected Place'),
+                    ],
+                    height: 350,
+                  ),
+                  const SizedBox(height: 20),
+                  _buildChartContainer(
+                    context,
+                    title: 'Nearby Chargers for Selected Place',
+                    chart: NearbyChargersChart(
+                      viewModel: nearbyChargersViewModel,
+                      selectedStationName: nearbyChargersViewModel
+                          .nearbyChargersResponse?.source.locationName,
+                    ),
+                    legendItems: [
+                      LegendItem(color: Colors.purple, label: 'Nearby Charger'),
+                    ],
+                    height: 350,
+                  ),
                 ],
               ),
             ),
@@ -274,7 +268,7 @@ _buildChartContainer(
           ),
           const SizedBox(height: 10),
           Card(
-            color: Colors.white, // Change card color to grey
+            color: HotspotTheme.backgroundGrey, // Change card color to grey
             elevation: 4,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -432,7 +426,8 @@ _buildChartContainer(
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: HotspotTheme.backgroundColor.withOpacity(0.8), // Apply theme background
+        color:
+            HotspotTheme.textColor.withOpacity(0.8), // Apply theme background
         borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
@@ -462,7 +457,8 @@ _buildChartContainer(
                     item.label,
                     style: TextStyle(
                       fontSize: 12,
-                      color: HotspotTheme.textColor, // Apply theme text color
+                      color: HotspotTheme
+                          .buttonTextColor, // Apply theme text color
                     ),
                   ),
                 ],

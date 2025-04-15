@@ -7,6 +7,7 @@ class HotspotTheme {
   static const Color accentColor = Colors.amber; // For ratings
   static const Color backgroundColor = Colors.white;
   static const Color buttonTextColor = Colors.white;
+  static const Color backgroundGrey =  Color.fromARGB(255, 56, 56, 56);
 
   // Marker-specific colors
   static const Color chargerColor = Colors.purple; // Fixed color for EV chargers

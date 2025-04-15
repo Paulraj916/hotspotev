@@ -13,8 +13,8 @@ class EVStationTreemap extends StatelessWidget {
       // Return a placeholder widget when there's no data
       return Container(
         decoration: BoxDecoration(
-          color: Colors.grey[100],
-          border: Border.all(color: Colors.grey[300]!),
+          color: HotspotTheme.backgroundGrey,
+          border: Border.all(color: const Color.fromARGB(255, 95, 95, 95)!),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Center(
@@ -30,7 +30,7 @@ class EVStationTreemap extends StatelessWidget {
               Text(
                 'No EV station data available',
                 style: TextStyle(
-                  color: HotspotTheme.textColor,
+                  color: HotspotTheme.backgroundColor,
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                 ),
@@ -39,7 +39,7 @@ class EVStationTreemap extends StatelessWidget {
               Text(
                 'Data will appear here when available',
                 style: TextStyle(
-                  color: HotspotTheme.textColor.withOpacity(0.7),
+                  color: HotspotTheme.backgroundColor.withOpacity(0.7),
                   fontSize: 14,
                 ),
               ),

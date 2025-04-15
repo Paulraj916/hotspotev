@@ -1,3 +1,4 @@
+// detail_row_tags.dart
 import 'package:flutter/material.dart';
 
 import '../theme/hotspot_theme.dart';

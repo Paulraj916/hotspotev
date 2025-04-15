@@ -84,7 +84,7 @@ class ConnectorTypeBatteryPowerBarChart extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 12,
                           color:
-                              HotspotTheme.textColor, // Apply theme text color
+                              HotspotTheme.backgroundColor, // Apply theme text color
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -103,7 +103,7 @@ class ConnectorTypeBatteryPowerBarChart extends StatelessWidget {
               getTitlesWidget: (value, meta) => Text(
                 value.toString(),
                 style: TextStyle(
-                  color: HotspotTheme.textColor, // Apply theme text color
+                  color: HotspotTheme.backgroundColor, // Apply theme text color
                   fontSize: 12,
                 ),
               ),

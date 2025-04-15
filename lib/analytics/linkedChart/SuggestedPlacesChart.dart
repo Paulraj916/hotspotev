@@ -4,7 +4,6 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:hotspot/models/hotspot_model.dart';
 import 'package:hotspot/main.dart';
-import 'package:hotspot/viewmodels/nearby_chargers_viewmodel.dart';
 
 class SuggestedPlacesChart extends StatefulWidget {
   final List<SuggestedHotspot> suggestedStations;
@@ -58,7 +57,7 @@ class _SuggestedPlacesChartState extends State<SuggestedPlacesChart> {
                       getTitlesWidget: (value, meta) => Text(
                         value.toString(),
                         style: TextStyle(
-                          color: HotspotTheme.textColor,
+                          color: HotspotTheme.backgroundColor,
                           fontSize: 12,
                         ),
                       ),
@@ -82,7 +81,7 @@ class _SuggestedPlacesChartState extends State<SuggestedPlacesChart> {
                               firstWord,
                               style: TextStyle(
                                 fontSize: 12,
-                                color: HotspotTheme.textColor,
+                                color: HotspotTheme.backgroundColor,
                               ),
                               textAlign: TextAlign.center,
                               overflow: TextOverflow.ellipsis,

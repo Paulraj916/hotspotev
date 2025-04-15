@@ -1,5 +1,9 @@
+// suggested_list_dialog.dart
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../models/hotspot_model.dart';
 import '../theme/hotspot_theme.dart';
@@ -10,6 +14,7 @@ void showSuggestedListDialog(
   BuildContext context,
   HotspotViewModel viewModel,
   TabController tabController,
+  Completer<GoogleMapController>? controller,
 ) {
   showModalBottomSheet(
     context: context,
@@ -30,7 +35,12 @@ void showSuggestedListDialog(
               children: [
                 _buildTabBar(viewModel, tabController),
                 Expanded(
-                  child: _buildTabBarView(viewModel, scrollController, tabController),
+                  child: _buildTabBarView(
+                    viewModel,
+                    scrollController,
+                    tabController,
+                    controller,
+                  ),
                 ),
               ],
             ),
@@ -68,6 +78,7 @@ Widget _buildTabBarView(
   HotspotViewModel viewModel,
   ScrollController scrollController,
   TabController tabController,
+  Completer<GoogleMapController>? controller,
 ) {
   return TabBarView(
     controller: tabController,
@@ -77,7 +88,7 @@ Widget _buildTabBarView(
         itemCount: viewModel.getFilteredSuggestedHotspots().length,
         itemBuilder: (context, index) {
           final hotspot = viewModel.getFilteredSuggestedHotspots()[index];
-          return _buildHotspotTile(context, hotspot);
+          return _buildHotspotTile(context, hotspot, controller, viewModel);
         },
       ),
       ListView.builder(
@@ -85,19 +96,24 @@ Widget _buildTabBarView(
         itemCount: viewModel.getFilteredEVStations().length,
         itemBuilder: (context, index) {
           final charger = viewModel.getFilteredEVStations()[index];
-          return _buildEVStationTile(context, charger);
+          return _buildEVStationTile(context, charger, controller, viewModel);
         },
       ),
     ],
   );
 }
 
-Widget _buildHotspotTile(BuildContext context, SuggestedHotspot hotspot) {
+Widget _buildHotspotTile(
+  BuildContext context,
+  SuggestedHotspot hotspot,
+  Completer<GoogleMapController>? controller,
+  HotspotViewModel viewModel,
+) {
   return Container(
     margin: const EdgeInsets.only(top: 10, left: 10, right: 10),
     padding: const EdgeInsets.all(5),
     decoration: BoxDecoration(
-      color: const Color.fromARGB(255, 56, 56, 56),
+      color: HotspotTheme.backgroundGrey,
       borderRadius: BorderRadius.circular(10),
     ),
     child: ListTile(
@@ -120,7 +136,9 @@ Widget _buildHotspotTile(BuildContext context, SuggestedHotspot hotspot) {
             hotspot.isExistingChargeStationFound
                 ? Icons.ev_station_outlined
                 : Icons.ev_station,
-            color: hotspot.isExistingChargeStationFound ? Colors.red : Colors.green,
+            color: hotspot.isExistingChargeStationFound
+                ? Colors.red
+                : Colors.green,
             size: 20,
           ),
         ],
@@ -175,47 +193,90 @@ Widget _buildHotspotTile(BuildContext context, SuggestedHotspot hotspot) {
           ),
         ],
       ),
-      onTap: () => showMarkerDetailsBottomSheet(context: context, hotspot: hotspot),
+      onTap: () async {
+        final mapController = await controller?.future;
+        final position = LatLng(hotspot.lat ?? 0.0, hotspot.lng ?? 0.0);
+
+        // Zoom to the hotspot
+        mapController?.animateCamera(
+          CameraUpdate.newLatLngZoom(position, 20),
+        );
+
+        // Trigger marker bounce
+        viewModel.bounceMarker('suggested_${hotspot.id}', hotspot.totalWeight ?? 0);
+
+        // Show details
+        showMarkerDetailsBottomSheet(context: context, hotspot: hotspot);
+      },
     ),
   );
 }
 
-Widget _buildEVStationTile(BuildContext context, ExistingCharger charger) {
-  return ListTile(
-    title: Text(
-      charger.displayName,
-      style: const TextStyle(
-        color: HotspotTheme.backgroundColor,
-        fontWeight: FontWeight.bold,
+Widget _buildEVStationTile(
+  BuildContext context,
+  ExistingCharger charger,
+  Completer<GoogleMapController>? controller,
+  HotspotViewModel viewModel,
+) {
+  return Container(
+    margin: const EdgeInsets.only(top: 10, left: 10, right: 10),
+    padding: const EdgeInsets.all(5),
+    decoration: BoxDecoration(
+      color: HotspotTheme.backgroundGrey,
+      borderRadius: BorderRadius.circular(10),
+    ),
+    child: ListTile(
+      title: Text(
+        charger.displayName,
+        style: const TextStyle(
+          color: HotspotTheme.backgroundColor,
+          fontWeight: FontWeight.bold,
+        ),
       ),
-    ),
-    subtitle: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const Text(
-              'Rating: ',
-              style: TextStyle(color: HotspotTheme.buttonTextColor),
-            ),
-            RatingBarIndicator(
-              rating: charger.rating ?? 0,
-              itemBuilder: (context, _) => const Icon(
-                Icons.star,
-                color: HotspotTheme.accentColor,
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 10),
+          Text(
+            charger.formattedAddress,
+            style: const TextStyle(color: HotspotTheme.buttonTextColor),
+          ),
+          const SizedBox(height: 5),
+          Row(
+            children: [
+              RatingBarIndicator(
+                rating: charger.rating ?? 0,
+                itemBuilder: (context, _) => const Icon(
+                  Icons.star,
+                  color: HotspotTheme.accentColor,
+                ),
+                itemCount: 5,
+                itemSize: 20.0,
+                unratedColor: Colors.grey[300],
               ),
-              itemCount: 5,
-              itemSize: 20.0,
-              unratedColor: Colors.grey[300],
-            ),
-          ],
-        ),
-        Text(
-          'Address: ${charger.formattedAddress}',
-          style: const TextStyle(color: HotspotTheme.buttonTextColor),
-        ),
-      ],
+              Text(
+                '  ${charger.rating} (${charger.userRatingCount})',
+                style: const TextStyle(color: HotspotTheme.buttonTextColor),
+              ),
+            ],
+          ),
+        ],
+      ),
+      onTap: () async {
+        final mapController = await controller?.future;
+        final position = LatLng(charger.lat ?? 0.0, charger.lng ?? 0.0);
+
+        // Zoom to the charger
+        mapController?.animateCamera(
+          CameraUpdate.newLatLngZoom(position, 20),
+        );
+
+        // Trigger marker bounce
+        viewModel.bounceMarker('existing_${charger.id}', charger.rating ?? 0, isCharger: true);
+
+        // Show details
+        showMarkerDetailsBottomSheet(context: context, charger: charger);
+      },
     ),
-    onTap: () => showMarkerDetailsBottomSheet(context: context, charger: charger),
   );
 }
