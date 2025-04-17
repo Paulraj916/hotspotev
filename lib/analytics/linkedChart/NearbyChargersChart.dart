@@ -2,8 +2,8 @@
 import 'dart:math';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:hotspot/main.dart';
 import 'package:hotspot/models/nearby_chargers_model.dart';
+import 'package:hotspot/theme/hotspot_theme.dart';
 import 'package:hotspot/viewmodels/nearby_chargers_viewmodel.dart';
 
 class NearbyChargersChart extends StatelessWidget {
@@ -77,7 +77,7 @@ class NearbyChargersChart extends StatelessWidget {
     final maxY = sortedDestinations.isNotEmpty
         ? sortedDestinations.map((d) => d.distance).reduce(max) + 5
         : 5.0;
-        
+
     // Calculate appropriate width based on number of items
     final chartWidth = max(sortedDestinations.length * 50.0, 300.0);
 
@@ -115,7 +115,8 @@ class NearbyChargersChart extends StatelessWidget {
                         final words = charger.locationName.split(' ');
                         final firstWord = words.isNotEmpty ? words[0] : '';
                         final secondWord = words.length > 1
-                            ? words[1].substring(0, words[1].length.clamp(0, 12))
+                            ? words[1]
+                                .substring(0, words[1].length.clamp(0, 12))
                             : '';
                         return '$firstWord\n$secondWord';
                       })();
@@ -141,8 +142,10 @@ class NearbyChargersChart extends StatelessWidget {
                   reservedSize: 80,
                 ),
               ),
-              topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              topTitles:
+                  const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              rightTitles:
+                  const AxisTitles(sideTitles: SideTitles(showTitles: false)),
             ),
             borderData: FlBorderData(show: false),
             barGroups: sortedDestinations.asMap().entries.map((entry) {

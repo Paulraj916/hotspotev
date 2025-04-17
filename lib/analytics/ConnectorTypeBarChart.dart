@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:hotspot/models/hotspot_model.dart';
-import 'package:hotspot/main.dart';
+import 'package:hotspot/theme/hotspot_theme.dart';
 
 class ConnectorTypeBarChart extends StatelessWidget {
   final List<ExistingCharger> evStations;
@@ -15,23 +15,23 @@ class ConnectorTypeBarChart extends StatelessWidget {
   static Map<String, int> _countConnectorTypes(
       List<ExistingCharger> evStations) {
     final Map<String, int> connectorCount = {
-      'type 2': 0,
-      'ccs2': 0,
-      'chademo': 0,
-      'other': 0,
-      '16a or 3pin': 0,
+      'Type 2': 0,
+      'CCS2': 0,
+      'CHAdeMO': 0,
+      'Other': 0,
+      '16A/3Pin': 0,
     };
 
     for (var station in evStations) {
       final type = station.evChargeOptions.type;
       if (type != null) {
         final formattedType = type == 'EV_CONNECTOR_TYPE_TYPE_2'
-            ? 'type 2'
+            ? 'Type 2'
             : type == 'EV_CONNECTOR_TYPE_CCS_COMBO_2'
-                ? 'ccs2'
+                ? 'CCS2'
                 : type == 'EV_CONNECTOR_TYPE_CHADEMO'
-                    ? 'chademo'
-                    : 'other';
+                    ? 'CHAdeMO'
+                    : 'Other';
         connectorCount[formattedType] =
             (connectorCount[formattedType] ?? 0) + 1;
       }
@@ -50,7 +50,7 @@ class ConnectorTypeBarChart extends StatelessWidget {
     return BarChart(
       BarChartData(
         alignment: BarChartAlignment.spaceAround,
-        maxY: (maxY+5).toDouble(),
+        maxY: (maxY + 5).toDouble(),
         titlesData: FlTitlesData(
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
@@ -66,7 +66,8 @@ class ConnectorTypeBarChart extends StatelessWidget {
                         types[index],
                         style: TextStyle(
                           fontSize: 12,
-                          color: HotspotTheme.backgroundColor, // Apply theme text color
+                          color: HotspotTheme
+                              .backgroundColor, // Apply theme text color
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -114,14 +115,16 @@ class ConnectorTypeBarChart extends StatelessWidget {
         barTouchData: BarTouchData(
           enabled: true,
           touchTooltipData: BarTouchTooltipData(
-            tooltipBgColor: HotspotTheme.textColor.withOpacity(0.8), // Apply theme
+            tooltipBgColor:
+                HotspotTheme.textColor.withOpacity(0.8), // Apply theme
             getTooltipItem: (group, groupIndex, rod, rodIndex) {
               final type = types[group.x.toInt()];
               final count = counts[group.x.toInt()];
               return BarTooltipItem(
                 '$type: $count',
                 TextStyle(
-                  color: HotspotTheme.backgroundColor, // Contrast with tooltip background
+                  color: HotspotTheme
+                      .backgroundColor, // Contrast with tooltip background
                   fontSize: 12,
                 ),
               );

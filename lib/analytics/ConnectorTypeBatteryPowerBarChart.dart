@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:hotspot/models/hotspot_model.dart';
-import 'package:hotspot/main.dart';
+import 'package:hotspot/theme/hotspot_theme.dart';
 
 class ConnectorTypeBatteryPowerBarChart extends StatelessWidget {
   final List<ExistingCharger> evStations;
@@ -15,11 +15,11 @@ class ConnectorTypeBatteryPowerBarChart extends StatelessWidget {
   static Map<String, List<double>> _groupByConnectorTypeAndPower(
       List<ExistingCharger> evStations) {
     final Map<String, List<double>> connectorPower = {
-      'type 2': [],
-      'ccs2': [],
-      'chademo': [],
-      'other': [],
-      '16a or 3pin': [],
+      'Type 2': [],
+      'CCS2': [],
+      'CHAdeMO': [],
+      'Other': [],
+      '16A/3Pin': [],
     };
 
     for (var station in evStations) {
@@ -27,12 +27,12 @@ class ConnectorTypeBatteryPowerBarChart extends StatelessWidget {
       final power = station.evChargeOptions.maxChargeRate?.toDouble() ?? 0;
       if (type != null) {
         final formattedType = type == 'EV_CONNECTOR_TYPE_TYPE_2'
-            ? 'type 2'
+            ? 'Type 2'
             : type == 'EV_CONNECTOR_TYPE_CCS_COMBO_2'
-                ? 'ccs2'
+                ? 'CCS2'
                 : type == 'EV_CONNECTOR_TYPE_CHADEMO'
-                    ? 'chademo'
-                    : 'other';
+                    ? 'CHAdeMO'
+                    : 'Other';
         connectorPower[formattedType]!.add(power);
       }
     }
@@ -83,8 +83,8 @@ class ConnectorTypeBatteryPowerBarChart extends StatelessWidget {
                         })(),
                         style: TextStyle(
                           fontSize: 12,
-                          color:
-                              HotspotTheme.backgroundColor, // Apply theme text color
+                          color: HotspotTheme
+                              .backgroundColor, // Apply theme text color
                         ),
                         textAlign: TextAlign.center,
                       ),

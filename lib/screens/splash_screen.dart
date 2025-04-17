@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'hotspot_view.dart';
 import 'login_screen.dart';
-import '../main.dart';
+import 'package:hotspot/theme/hotspot_theme.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});

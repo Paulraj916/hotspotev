@@ -18,7 +18,7 @@ import 'package:hotspot/models/nearby_chargers_model.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/hotspot_viewmodel.dart';
 import '../models/hotspot_model.dart';
-import '../main.dart';
+import 'package:hotspot/theme/hotspot_theme.dart';
 import '../viewmodels/nearby_chargers_viewmodel.dart';
 
 class AnalyticsScreen extends StatelessWidget {
@@ -72,7 +72,7 @@ class AnalyticsScreen extends StatelessWidget {
                 children: [
                   _buildChartContainer(
                     context,
-                    title: 'EV Station Brands Treemap',
+                    title: 'Local charger brands distribution',
                     chart: EVStationTreemap(
                       data: countStationsByBrand(evStations),
                     ),
@@ -82,20 +82,20 @@ class AnalyticsScreen extends StatelessWidget {
                   const SizedBox(height: 20),
                   _buildChartContainer(
                     context,
-                    title: 'EV Station Brands by Connector Type',
+                    title: 'Local chargers brands by connector type',
                     chart: EVStationStackedBarChart(evStations: evStations),
                     legendItems: [
-                      LegendItem(color: Colors.green, label: 'ccs2'),
-                      LegendItem(color: Colors.orange, label: 'chademo'),
-                      LegendItem(color: Colors.purple, label: 'type 2'),
-                      LegendItem(color: Colors.blue, label: 'other'),
+                      LegendItem(color: Colors.green, label: 'CCS2'),
+                      LegendItem(color: Colors.orange, label: 'CHAdeMO'),
+                      LegendItem(color: Colors.purple, label: 'Type 2'),
+                      LegendItem(color: Colors.blue, label: 'Other'),
                     ],
                     height: 350,
                   ),
                   const SizedBox(height: 20),
                   _buildChartContainer(
                     context,
-                    title: 'Suggested Stations Ratings',
+                    title: 'Hotspot ratings (Public)',
                     chart: RatingBarChartSuggested(
                       suggestedStations: suggestedStations,
                     ),
@@ -106,7 +106,7 @@ class AnalyticsScreen extends StatelessWidget {
                   const SizedBox(height: 20),
                   _buildChartContainer(
                     context,
-                    title: 'EV Stations Ratings',
+                    title: 'Local charger ratings (Public)',
                     chart: RatingBarChartEV(evStations: evStations),
                     legendItems: [
                       LegendItem(color: Colors.purple, label: 'EV Stations'),
@@ -114,7 +114,7 @@ class AnalyticsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
                   _buildChartContainer(context,
-                      title: 'Score vs Rating (Suggested)',
+                      title: 'Hotspot score vs public ratings',
                       chart: WeightVsRatingBarChart(
                         suggestedStations: suggestedStations,
                       ),
@@ -126,7 +126,7 @@ class AnalyticsScreen extends StatelessWidget {
                   const SizedBox(height: 20),
                   _buildChartContainer(context,
                       title:
-                          'Nearby Distance (km) Between Suggested and Existing Chargers',
+                          'Distance to nearest local charger',
                       chart: NearbyDistanceBarChart(
                         suggestedStations: suggestedStations,
                       ),

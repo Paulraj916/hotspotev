@@ -1,18 +1,18 @@
 // hotspot_view.dart
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:hotspot/theme/hotspot_theme.dart';
+import 'package:hotspot/models/nearby_chargers_model.dart';
 import 'package:provider/provider.dart';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
-
 import '../components/filter_bottom_sheet.dart';
 import '../components/marker_details_bottom_sheet.dart';
 import '../components/suggested_list_dialog.dart';
 import '../config/constants.dart';
 import '../screens/analytics_view.dart';
 import '../screens/login_screen.dart';
-import '../theme/hotspot_theme.dart';
 import '../viewmodels/hotspot_viewmodel.dart';
 
 class HotspotMapScreen extends StatefulWidget {
@@ -45,10 +45,33 @@ class _HotspotMapScreenState extends State<HotspotMapScreen>
           context: context,
           hotspot: hotspot,
         ),
-        onExistingTap: (charger) => showMarkerDetailsBottomSheet(
-          context: context,
-          charger: charger,
-        ),
+        onExistingTap: (charger) {
+          final isNearbyMode = viewModel.isNearbyChargersMode;
+          double? distance;
+          String? sourceHotspotName;
+          if (isNearbyMode && viewModel.nearbyChargersResponse != null) {
+            final destination =
+                viewModel.nearbyChargersResponse!.destination.firstWhere(
+              (d) => d.id == 'existing_${charger.id}',
+              orElse: () => Destination(
+                id: '',
+                locationName: '',
+                placeId: '',
+                latitude: 0.0,
+                longitude: 0.0,
+                distance: 0.0,
+              ),
+            );
+            distance = destination.distance;
+            sourceHotspotName = viewModel.currentHotspot?.displayName;
+          }
+          showMarkerDetailsBottomSheet(
+            context: context,
+            charger: charger,
+            distance: distance,
+            sourceHotspotName: sourceHotspotName,
+          );
+        },
       );
     });
   }
@@ -62,7 +85,6 @@ class _HotspotMapScreenState extends State<HotspotMapScreen>
     super.dispose();
   }
 
-  // Handle search input changes
   void _onSearchChanged() {
     if (_searchController.text.isNotEmpty) {
       _fetchPlaceSuggestions(_searchController.text);
@@ -73,13 +95,11 @@ class _HotspotMapScreenState extends State<HotspotMapScreen>
     }
   }
 
-  // Fetch user email from SharedPreferences
   Future<String?> _getUserEmail() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('userEmail') ?? 'admin@gmail.com';
   }
 
-  // Fetch place suggestions from view model
   Future<void> _fetchPlaceSuggestions(String input) async {
     try {
       final viewModel = context.read<HotspotViewModel>();
@@ -93,7 +113,6 @@ class _HotspotMapScreenState extends State<HotspotMapScreen>
     }
   }
 
-  // Select a place and update map
   Future<void> _selectPlace(String placeId) async {
     try {
       final viewModel = context.read<HotspotViewModel>();
@@ -114,14 +133,12 @@ class _HotspotMapScreenState extends State<HotspotMapScreen>
     }
   }
 
-  // Toggle between normal and hybrid map types
   void _toggleMapType() {
     setState(() {
       _mapType = _mapType == MapType.normal ? MapType.hybrid : MapType.normal;
     });
   }
 
-  // Logout and navigate to login screen
   Future<void> _logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isLoggedIn', false);
@@ -135,41 +152,121 @@ class _HotspotMapScreenState extends State<HotspotMapScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       drawer: Drawer(
-        child: FutureBuilder<String?>(
-          future: _getUserEmail(),
-          builder: (context, snapshot) {
-            final email = snapshot.data ?? 'No email found';
-            return Column(
-              children: [
-                UserAccountsDrawerHeader(
-                  accountName: Text(
-                    'User',
-                    style: TextStyle(color: HotspotTheme.buttonTextColor),
+        child: Container(
+          color: HotspotTheme.backgroundGrey
+              .withOpacity(0.95), // Subtle background
+          child: FutureBuilder<String?>(
+            future: _getUserEmail(),
+            builder: (context, snapshot) {
+              final email = snapshot.data ?? 'No email found';
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Drawer Header
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16.0).copyWith(
+                        top: MediaQuery.of(context).padding.top +
+                            16), // Respect top padding
+                    decoration: BoxDecoration(
+                      color: HotspotTheme.textColor, // Same header color
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Profile Avatar Placeholder
+                        CircleAvatar(
+                          radius: 32,
+                          backgroundColor:
+                              HotspotTheme.buttonTextColor.withOpacity(0.2),
+                          child: Text(
+                            email[0], // First letter of "User"
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: HotspotTheme.buttonTextColor,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        // User Name
+                        Text(
+                          email,
+                          style: TextStyle(
+                            color: HotspotTheme.buttonTextColor,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                      ],
+                    ),
                   ),
-                  accountEmail: Text(
-                    email,
-                    style: TextStyle(color: HotspotTheme.buttonTextColor),
+                  // Divider for separation
+                  Divider(
+                    color: HotspotTheme.textColor.withOpacity(0.2),
+                    thickness: 1,
+                    height: 1,
                   ),
-                  decoration: BoxDecoration(
-                    color: HotspotTheme.textColor,
+                  // Expanded to take up remaining space and push Logout to the bottom
+                  Expanded(
+                    child: Container(), // Empty container to fill space
                   ),
-                ),
-                const Spacer(),
-                ListTile(
-                  leading: Icon(Icons.logout, color: HotspotTheme.accentColor),
-                  title: Text(
-                    'Logout',
-                    style: TextStyle(color: HotspotTheme.textColor),
+                  // Logout Button at the bottom
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0, vertical: 16.0),
+                    child: GestureDetector(
+                      onTap: () {
+                        _logout();
+                        
+                        Navigator.pop(context);
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 12.0, horizontal: 16.0),
+                        decoration: BoxDecoration(
+                          color: HotspotTheme.accentColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: HotspotTheme.accentColor.withOpacity(0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.logout,
+                              color: HotspotTheme.accentColor,
+                              size: 22,
+                            ),
+                            const SizedBox(width: 16),
+                            Text(
+                              'Logout',
+                              style: TextStyle(
+                                color: HotspotTheme.buttonTextColor,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
-                  onTap: () {
-                    _logout();
-                    Navigator.pop(context);
-                  },
-                ),
-                const SizedBox(height: 16),
-              ],
-            );
-          },
+                ],
+              );
+            },
+          ),
         ),
       ),
       body: SafeArea(
@@ -246,7 +343,7 @@ class _HotspotMapScreenState extends State<HotspotMapScreen>
                       mini: true,
                       backgroundColor: HotspotTheme.textColor,
                       onPressed: () => showSuggestedListDialog(
-                          context, viewModel, _tabController,_controller),
+                          context, viewModel, _tabController, _controller),
                       child: const Icon(Icons.list,
                           color: HotspotTheme.accentColor),
                     ),
@@ -295,26 +392,96 @@ class _HotspotMapScreenState extends State<HotspotMapScreen>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Legend',
-                              style: TextStyle(
-                                color: HotspotTheme.backgroundGrey,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
                             const SizedBox(height: 8),
-                            _buildLegendItem(HotspotTheme.chargerColor, 'EV Stations'),
-                            _buildLegendItem(HotspotTheme.hotspotHighScoreColor, 'Score ≥ 7'),
-                            _buildLegendItem(HotspotTheme.hotspotMediumScoreColor, 'Score 4 < 7'),
-                            _buildLegendItem(HotspotTheme.hotspotLowScoreColor, 'Score < 4'),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                // Vertical Hotspot Score Bar with Labels
+                                Stack(
+                                  alignment: Alignment.centerLeft,
+                                  children: [
+                                    // Gradient Bar
+                                    RotatedBox(
+                                      quarterTurns:
+                                          3, // Rotate 270 degrees to make it vertical
+                                      child: Container(
+                                        width:
+                                            150, // Height of the bar when rotated
+                                        height: 20, // Thickness of the bar
+                                        decoration: BoxDecoration(
+                                          gradient: const LinearGradient(
+                                            colors: [
+                                              Colors.green, // Low (bottom)
+                                              Colors.yellow, // Medium (middle)
+                                              Colors.red, // High (top)
+                                            ],
+                                            begin: Alignment.centerLeft,
+                                            end: Alignment.centerRight,
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                      ),
+                                    ),
+                                    // Labels positioned along the bar
+                                    SizedBox(
+                                      height:
+                                          150, // Match the height of the rotated bar
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: const [
+                                          Padding(
+                                            padding: EdgeInsets.only(left: 30),
+                                            child: Text(
+                                              'HIGH \nSCORE: 10',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding: EdgeInsets.only(left: 30),
+                                            child: Text(
+                                              'MEDIUM \nSCORE: 5',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding: EdgeInsets.only(left: 30),
+                                            child: Text(
+                                              'LOW \nSCORE: 0',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            // Existing Charger Legend Item
+                            _buildLegendItem(
+                                HotspotTheme.chargerColor, 'LOCAL\nCHARGERS'),
                           ],
                         ),
                       ),
                     ),
-                  )
+                  ),
                 ],
-                if (viewModel.selectedLocation != null)
+                if (viewModel.selectedLocation != null &&
+                    !viewModel.isNearbyChargersMode)
                   _buildRadiusAdjuster(viewModel),
               ],
             );
@@ -328,9 +495,13 @@ class _HotspotMapScreenState extends State<HotspotMapScreen>
     return Row(
       children: [
         Container(
-          width: 16,
-          height: 16,
-          margin: const EdgeInsets.only(right: 8),
+          width: 20,
+          height: 20,
+          child: Text(
+            "⚡",
+            textAlign: TextAlign.center,
+          ),
+          margin: const EdgeInsets.only(right: 10),
           decoration: BoxDecoration(
             color: color,
             shape: BoxShape.circle,
@@ -338,13 +509,15 @@ class _HotspotMapScreenState extends State<HotspotMapScreen>
         ),
         Text(
           label,
-          style: const TextStyle(color: Colors.black87),
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ],
     );
   }
 
-  // Build search bar widget
   Widget _buildSearchBar(BuildContext context) {
     return Card(
       color: HotspotTheme.textColor,
@@ -363,11 +536,12 @@ class _HotspotMapScreenState extends State<HotspotMapScreen>
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
               child: TextField(
+                cursorColor: HotspotTheme.primaryColor,
                 controller: _searchController,
                 style: const TextStyle(color: HotspotTheme.buttonTextColor),
                 textAlignVertical: TextAlignVertical.center,
                 decoration: const InputDecoration(
-                  hintText: 'Search location...',
+                  hintText: 'Search location',
                   hintStyle: TextStyle(color: Colors.grey),
                   border: InputBorder.none,
                   suffixIcon:
@@ -381,7 +555,6 @@ class _HotspotMapScreenState extends State<HotspotMapScreen>
     );
   }
 
-  // Build place suggestions list
   Widget _buildSuggestionsList() {
     return Card(
       color: HotspotTheme.textColor,
@@ -413,7 +586,6 @@ class _HotspotMapScreenState extends State<HotspotMapScreen>
     );
   }
 
-  // Build radius adjuster card
   Widget _buildRadiusAdjuster(HotspotViewModel viewModel) {
     return Positioned(
       bottom: 20,
@@ -435,7 +607,7 @@ class _HotspotMapScreenState extends State<HotspotMapScreen>
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
-                    'Adjust Radius',
+                    'Radius (km)',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -456,15 +628,23 @@ class _HotspotMapScreenState extends State<HotspotMapScreen>
                   const Text('1 km',
                       style: TextStyle(color: HotspotTheme.buttonTextColor)),
                   Expanded(
-                    child: Slider(
-                      value: viewModel.radius,
-                      min: 1.0,
-                      max: 50.0,
-                      divisions: 49,
-                      label: '${viewModel.radius.toStringAsFixed(1)} km',
-                      activeColor: HotspotTheme.accentColor,
-                      onChanged: viewModel.updateRadius,
-                    ),
+                    child: SliderTheme(
+  data: SliderTheme.of(context).copyWith(
+    valueIndicatorTextStyle: const TextStyle(
+      color: HotspotTheme.textColor, // <-- Label text color
+    ),
+  ),
+  child: Slider(
+    value: viewModel.radius,
+    min: 1.0,
+    max: 50.0,
+    divisions: 49,
+    label: '${viewModel.radius.toStringAsFixed(1)} km',
+    activeColor: HotspotTheme.accentColor,
+    onChanged: viewModel.updateRadius,
+  ),
+),
+
                   ),
                   const Text('50 km',
                       style: TextStyle(color: HotspotTheme.buttonTextColor)),
@@ -475,7 +655,8 @@ class _HotspotMapScreenState extends State<HotspotMapScreen>
                 width: double.infinity,
                 height: 48,
                 child: ElevatedButton(
-                  onPressed: viewModel.isLoading ? null : viewModel.fetchHotspots,
+                  onPressed:
+                      viewModel.isLoading ? null : viewModel.fetchHotspots,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: HotspotTheme.accentColor,
                     foregroundColor: HotspotTheme.textColor,

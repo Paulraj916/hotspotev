@@ -4,7 +4,7 @@ import 'dart:math';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:hotspot/models/hotspot_model.dart';
-import 'package:hotspot/main.dart';
+import 'package:hotspot/theme/hotspot_theme.dart';
 
 class EVStationRatingVsReviewChart extends StatelessWidget {
   final List<ExistingCharger> evStations;
@@ -21,7 +21,7 @@ class EVStationRatingVsReviewChart extends StatelessWidget {
     //     : 5.0;
 
     final maxReviewCount = sortedStations.isNotEmpty
-        ? sortedStations.map((s) => s.userRatingCount ).reduce(max) + 1
+        ? sortedStations.map((s) => s.userRatingCount).reduce(max) + 1
         : 5.0;
 
     return SizedBox(
@@ -45,7 +45,8 @@ class EVStationRatingVsReviewChart extends StatelessWidget {
                 getTitlesWidget: (value, meta) => Text(
                   value.toString(),
                   style: TextStyle(
-                    color: HotspotTheme.backgroundColor, // Apply theme text color
+                    color:
+                        HotspotTheme.backgroundColor, // Apply theme text color
                     fontSize: 12,
                   ),
                 ),
@@ -98,10 +99,9 @@ class EVStationRatingVsReviewChart extends StatelessWidget {
           barGroups: sortedStations.asMap().entries.map((entry) {
             final station = entry.value;
 
-            final normalizedReviewCount =
-                station.userRatingCount > 0
-                    ? min((station.userRatingCount / maxReviewCount) * 5, 5.0)
-                    : 0.0;
+            final normalizedReviewCount = station.userRatingCount > 0
+                ? min((station.userRatingCount / maxReviewCount) * 5, 5.0)
+                : 0.0;
 
             return BarChartGroupData(
               x: entry.key,

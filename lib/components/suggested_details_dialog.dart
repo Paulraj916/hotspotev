@@ -58,7 +58,7 @@ void showSuggestedDetailsDialog(BuildContext context, SuggestedHotspot hotspot) 
                 Row(
                   children: [
                     const Text(
-                      'Score: ',
+                      'Hotspot Score: ',
                       style: TextStyle(
                         color: HotspotTheme.primaryColor,
                         fontWeight: FontWeight.bold,

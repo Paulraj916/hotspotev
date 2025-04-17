@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:hotspot/main.dart';
+import 'package:hotspot/theme/hotspot_theme.dart';
 import 'package:syncfusion_flutter_treemap/treemap.dart';
 
 class EVStationTreemap extends StatelessWidget {

@@ -1,10 +1,9 @@
 // suggested_list_dialog.dart
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-
+import 'package:hotspot/models/nearby_chargers_model.dart';
 import '../models/hotspot_model.dart';
 import '../theme/hotspot_theme.dart';
 import '../viewmodels/hotspot_viewmodel.dart';
@@ -52,6 +51,7 @@ void showSuggestedListDialog(
 }
 
 Widget _buildTabBar(HotspotViewModel viewModel, TabController tabController) {
+  final isNearbyMode = viewModel.isNearbyChargersMode;
   return Container(
     color: HotspotTheme.textColor,
     child: TabBar(
@@ -64,10 +64,10 @@ Widget _buildTabBar(HotspotViewModel viewModel, TabController tabController) {
       unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
       tabs: [
         Tab(
-          text: 'Hotspots (${viewModel.getFilteredSuggestedHotspots().length})',
+          text: 'Hotspots (${isNearbyMode ? 1 : viewModel.getFilteredSuggestedHotspots().length})',
         ),
         Tab(
-          text: 'EV Stations (${viewModel.getFilteredEVStations().length})',
+          text: 'Local Chargers (${viewModel.getFilteredEVStations().length})',
         ),
       ],
     ),
@@ -80,14 +80,15 @@ Widget _buildTabBarView(
   TabController tabController,
   Completer<GoogleMapController>? controller,
 ) {
+  final isNearbyMode = viewModel.isNearbyChargersMode;
   return TabBarView(
     controller: tabController,
     children: [
       ListView.builder(
         controller: scrollController,
-        itemCount: viewModel.getFilteredSuggestedHotspots().length,
+        itemCount: isNearbyMode ? (viewModel.currentHotspot != null ? 1 : 0) : viewModel.getFilteredSuggestedHotspots().length,
         itemBuilder: (context, index) {
-          final hotspot = viewModel.getFilteredSuggestedHotspots()[index];
+          final hotspot = isNearbyMode ? viewModel.currentHotspot! : viewModel.getFilteredSuggestedHotspots()[index];
           return _buildHotspotTile(context, hotspot, controller, viewModel);
         },
       ),
@@ -136,9 +137,7 @@ Widget _buildHotspotTile(
             hotspot.isExistingChargeStationFound
                 ? Icons.ev_station_outlined
                 : Icons.ev_station,
-            color: hotspot.isExistingChargeStationFound
-                ? Colors.red
-                : Colors.green,
+            color: hotspot.isExistingChargeStationFound ? Colors.red : Colors.green,
             size: 20,
           ),
         ],
@@ -174,7 +173,7 @@ Widget _buildHotspotTile(
           Row(
             children: [
               const Text(
-                'Score: ',
+                'Hotspot Score: ',
                 style: TextStyle(color: HotspotTheme.buttonTextColor),
               ),
               Expanded(
@@ -197,15 +196,12 @@ Widget _buildHotspotTile(
         final mapController = await controller?.future;
         final position = LatLng(hotspot.lat ?? 0.0, hotspot.lng ?? 0.0);
 
-        // Zoom to the hotspot
         mapController?.animateCamera(
           CameraUpdate.newLatLngZoom(position, 20),
         );
 
-        // Trigger marker bounce
         viewModel.bounceMarker('suggested_${hotspot.id}', hotspot.totalWeight ?? 0);
 
-        // Show details
         showMarkerDetailsBottomSheet(context: context, hotspot: hotspot);
       },
     ),
@@ -266,16 +262,36 @@ Widget _buildEVStationTile(
         final mapController = await controller?.future;
         final position = LatLng(charger.lat ?? 0.0, charger.lng ?? 0.0);
 
-        // Zoom to the charger
         mapController?.animateCamera(
           CameraUpdate.newLatLngZoom(position, 20),
         );
 
-        // Trigger marker bounce
         viewModel.bounceMarker('existing_${charger.id}', charger.rating ?? 0, isCharger: true);
 
-        // Show details
-        showMarkerDetailsBottomSheet(context: context, charger: charger);
+        double? distance;
+        String? sourceHotspotName;
+        if (viewModel.isNearbyChargersMode && viewModel.nearbyChargersResponse != null) {
+          final destination = viewModel.nearbyChargersResponse!.destination.firstWhere(
+            (d) => d.id == 'existing_${charger.id}',
+            orElse: () => Destination(
+              id: '',
+              locationName: '',
+              placeId: '',
+              latitude: 0.0,
+              longitude: 0.0,
+              distance: 0.0,
+            ),
+          );
+          distance = destination.distance;
+          sourceHotspotName = viewModel.currentHotspot?.displayName;
+        }
+
+        showMarkerDetailsBottomSheet(
+          context: context,
+          charger: charger,
+          distance: distance,
+          sourceHotspotName: sourceHotspotName,
+        );
       },
     ),
   );

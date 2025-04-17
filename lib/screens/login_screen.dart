@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'hotspot_view.dart';
-import '../main.dart';
+import 'package:hotspot/theme/hotspot_theme.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,45 +15,64 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
 
-Future<void> _login() async {
-  print('Login button pressed.');
-  setState(() {
-    _isLoading = true;
-  });
+  Future<void> _login() async {
+    print('Login button pressed.');
+    setState(() {
+      _isLoading = true;
+    });
 
-  const String correctEmail = 'admin@gmail.com';
-  const String correctPassword = 'hello123';
+    // Map of valid email-password pairs
+    const Map<String, String> validUsers = {
+      'admin@steam-a.com': 'Admin@123',
+      'dev@steam-a.com': 'Dev@123',
+      'tester@steam-a.com': 'Tester@123',
+    };
 
-  final String email = _emailController.text.trim();
-  final String password = _passwordController.text.trim();
-  print('Email entered: "$email", Password entered: "$password"');
+    final String email = _emailController.text.trim();
+    final String password = _passwordController.text.trim();
+    print('Email entered: "$email", Password entered: "$password"');
 
-  if (email == correctEmail && password == correctPassword) {
-    print('Credentials match. Attempting to save login state...');
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      print('SharedPreferences instance obtained.');
-      await prefs.setBool('isLoggedIn', true);
-      await prefs.setString('userEmail', email); // Save email
-      print('Login state saved: isLoggedIn = true, userEmail = $email');
+    // Check if the email exists and password matches
+    if (validUsers.containsKey(email) && validUsers[email] == password) {
+      print('Credentials match. Attempting to save login state...');
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        print('SharedPreferences instance obtained.');
+        await prefs.setBool('isLoggedIn', true);
+        await prefs.setString('userEmail', email); // Save email
+        print('Login state saved: isLoggedIn = true, userEmail = $email');
 
-      if (!mounted) {
-        print('Widget not mounted, aborting navigation.');
-        return;
+        if (!mounted) {
+          print('Widget not mounted, aborting navigation.');
+          return;
+        }
+
+        print('Navigating to HotspotMapScreen...');
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HotspotMapScreen()),
+        );
+      } catch (e) {
+        print('Error with SharedPreferences: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Error saving login state: $e',
+                style: TextStyle(color: HotspotTheme.buttonTextColor),
+              ),
+              backgroundColor: HotspotTheme.hotspotLowScoreColor,
+            ),
+          );
+        }
       }
-
-      print('Navigating to HotspotMapScreen...');
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HotspotMapScreen()),
-      );
-    } catch (e) {
-      print('Error with SharedPreferences: $e');
+    } else {
+      print('Credentials do not match.');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Error saving login state: $e',
+              'Invalid email or password',
               style: TextStyle(color: HotspotTheme.buttonTextColor),
             ),
             backgroundColor: HotspotTheme.hotspotLowScoreColor,
@@ -61,27 +80,14 @@ Future<void> _login() async {
         );
       }
     }
-  } else {
-    print('Credentials do not match.');
+
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Invalid email or password',
-            style: TextStyle(color: HotspotTheme.buttonTextColor),
-          ),
-          backgroundColor: HotspotTheme.hotspotLowScoreColor,
-        ),
-      );
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
-  if (mounted) {
-    setState(() {
-      _isLoading = false;
-    });
-  }
-}
   @override
   void dispose() {
     _emailController.dispose();
@@ -108,7 +114,7 @@ Future<void> _login() async {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  'Welcome to EV Hotspot',
+                  'Welcome to IRIS SPOT',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -118,6 +124,7 @@ Future<void> _login() async {
                 const SizedBox(height: 40),
                 TextField(
                   controller: _emailController,
+                  cursorColor: HotspotTheme.primaryColor,
                   style: TextStyle(color: HotspotTheme.buttonTextColor),
                   decoration: InputDecoration(
                     labelText: 'Email',
@@ -134,6 +141,7 @@ Future<void> _login() async {
                 ),
                 const SizedBox(height: 20),
                 TextField(
+                  cursorColor: HotspotTheme.primaryColor,
                   controller: _passwordController,
                   style: TextStyle(color: HotspotTheme.buttonTextColor),
                   decoration: InputDecoration(
@@ -169,6 +177,7 @@ Future<void> _login() async {
                         : const Text(
                             'Login',
                             style: TextStyle(
+                              color: HotspotTheme.textColor,
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),

@@ -4,7 +4,7 @@ import 'dart:math';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:hotspot/models/hotspot_model.dart';
-import 'package:hotspot/main.dart';
+import 'package:hotspot/theme/hotspot_theme.dart';
 
 class SuggestedRatingVsReviewChart extends StatelessWidget {
   final List<SuggestedHotspot> suggestedStations;

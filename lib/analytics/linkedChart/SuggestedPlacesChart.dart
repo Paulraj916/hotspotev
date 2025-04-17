@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:hotspot/models/hotspot_model.dart';
-import 'package:hotspot/main.dart';
+import 'package:hotspot/theme/hotspot_theme.dart';
 
 class SuggestedPlacesChart extends StatefulWidget {
   final List<SuggestedHotspot> suggestedStations;
@@ -33,8 +33,8 @@ class _SuggestedPlacesChartState extends State<SuggestedPlacesChart> {
         : 5.0;
 
     // Calculate appropriate width based on number of items
-    final chartWidth = max(
-        (sortedSuggested.length+1) * 50.0, MediaQuery.of(context).size.width - 64);
+    final chartWidth = max((sortedSuggested.length + 1) * 50.0,
+        MediaQuery.of(context).size.width - 64);
     print("---------------$chartWidth");
     return SizedBox(
       height: 300,
@@ -93,10 +93,10 @@ class _SuggestedPlacesChartState extends State<SuggestedPlacesChart> {
                       reservedSize: 80,
                     ),
                   ),
-                  topTitles:
-                      const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles:
-                      const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
                 ),
                 borderData: FlBorderData(show: false),
                 barGroups: sortedSuggested
@@ -141,7 +141,7 @@ class _SuggestedPlacesChartState extends State<SuggestedPlacesChart> {
                         response.spot == null) {
                       return;
                     }
-        
+
                     final index = response.spot!.touchedBarGroupIndex;
                     setState(() {
                       if (selectedIndex == index) {

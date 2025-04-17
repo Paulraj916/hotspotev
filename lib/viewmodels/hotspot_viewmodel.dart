@@ -2,12 +2,12 @@
 import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:hotspot/main.dart';
-
+import 'package:hotspot/theme/hotspot_theme.dart';
 import '../models/hotspot_model.dart';
+import '../models/nearby_chargers_model.dart'; // Import nearby chargers model
 import '../repository/hotspot_repository.dart';
 
 class HotspotViewModel extends ChangeNotifier {
@@ -22,27 +22,49 @@ class HotspotViewModel extends ChangeNotifier {
   bool _isLoading = false;
   HotspotResponse? _hotspotResponse;
   bool _showActionButtons = false;
-  bool get showActionButtons => _showActionButtons;
-
   bool _showSuggested = true;
   bool _showExisting = true;
   RangeValues _scoreRange = const RangeValues(0, 10);
   RangeValues _ratingRange = const RangeValues(0, 5);
+  bool _isNearbyChargersMode = false; // New: Track toggle state
+  SuggestedHotspot? _currentHotspot; // New: Track current suggested hotspot
+  NearbyChargersResponse?
+      _nearbyChargersResponse; // New: Store nearby chargers data
 
   Function(SuggestedHotspot)? _onSuggestedTap;
   Function(ExistingCharger)? _onExistingTap;
 
+  // Getters
+  bool get isNearbyChargersMode => _isNearbyChargersMode;
+  SuggestedHotspot? get currentHotspot => _currentHotspot;
+  NearbyChargersResponse? get nearbyChargersResponse => _nearbyChargersResponse;
   HotspotResponse? get hotspotResponse => _hotspotResponse;
-
   Set<Marker> get markers => _markers;
   Set<Circle> get circles => _circles;
   LatLng? get selectedLocation => _selectedLocation;
   double get radius => _radius;
   bool get isLoading => _isLoading;
+  bool get showActionButtons => _showActionButtons;
   bool get showSuggested => _showSuggested;
   bool get showExisting => _showExisting;
   RangeValues get scoreRange => _scoreRange;
   RangeValues get ratingRange => _ratingRange;
+
+  // Toggle nearby chargers mode
+  void toggleNearbyChargersMode({
+    required bool isEnabled,
+    SuggestedHotspot? hotspot,
+    NearbyChargersResponse? response,
+  }) {
+    _isNearbyChargersMode = isEnabled;
+    _currentHotspot = isEnabled ? hotspot : null;
+    _nearbyChargersResponse = isEnabled ? response : null;
+    applyFilters(
+      onSuggestedTap: _onSuggestedTap,
+      onExistingTap: _onExistingTap,
+    );
+    notifyListeners();
+  }
 
   Future<BitmapDescriptor> getCustomMarker(
     double score, {
@@ -51,17 +73,27 @@ class HotspotViewModel extends ChangeNotifier {
   }) async {
     Color primaryColor;
     if (isCharger) {
-      primaryColor =
-          const Color.fromARGB(255, 22, 119, 255); // Deep Purple for chargers
-    } else if (score >= 7) {
-      primaryColor = const Color.fromARGB(
-          255, 82, 196, 26); // Forest Green for high scores
-    } else if (score >= 4) {
-      primaryColor = const Color.fromARGB(
-          255, 250, 173, 20); // Amber Yellow for medium scores
+      primaryColor = HotspotTheme.chargerColor;
     } else {
-      primaryColor =
-          const Color.fromARGB(255, 255, 77, 79); // Bright Red for low scores
+      // Normalize the score to a value between 0 and 1 (for gradient interpolation)
+      final normalizedScore = (score.clamp(0, 10) / 10); // Score from 0 to 10
+
+      // Interpolate between green (0), yellow (5), and red (10)
+      if (normalizedScore <= 0.5) {
+        // Interpolate between green (0) and yellow (0.5)
+        primaryColor = Color.lerp(
+          Colors.green,
+          const Color.fromARGB(255, 255, 193, 59),
+          normalizedScore * 2, // Scale 0-0.5 to 0-1 for interpolation
+        )!;
+      } else {
+        // Interpolate between yellow (0.5) and red (1.0)
+        primaryColor = Color.lerp(
+          const Color.fromARGB(255, 255, 193, 59),
+          Colors.red,
+          (normalizedScore - 0.5) * 2, // Scale 0.5-1.0 to 0-1 for interpolation
+        )!;
+      }
     }
 
     final baseSize = 150.0;
@@ -94,10 +126,9 @@ class HotspotViewModel extends ChangeNotifier {
     canvas.drawCircle(center, radius, paint);
 
     if (isCharger) {
-      // Draw a charge icon (lightning bolt)
       final iconPainter = TextPainter(
         text: TextSpan(
-          text: '⚡', // Lightning bolt symbol
+          text: '⚡',
           style: TextStyle(
             color: Colors.white,
             fontSize: 40 * sizeMultiplier,
@@ -113,7 +144,6 @@ class HotspotViewModel extends ChangeNotifier {
       );
       iconPainter.paint(canvas, iconOffset);
     } else {
-      // Draw score text for hotspots
       final text = score.toStringAsFixed(1);
       final textPainter = TextPainter(
         text: TextSpan(
@@ -143,15 +173,14 @@ class HotspotViewModel extends ChangeNotifier {
     return bitmap;
   }
 
-  /// Animates a marker to simulate a bouncing effect
   void bounceMarker(String markerId, double score,
       {bool isCharger = false}) async {
-    const bounceCount = 10;
+    // ... (Existing bounceMarker implementation unchanged)
+    const bounceCount = 1;
     const bounceDuration = Duration(milliseconds: 800);
 
     for (int i = 0; i < bounceCount * 2; i++) {
-      final sizeMultiplier =
-          i % 2 == 0 ? 1.1 : 1.0; // Toggle between larger and normal size
+      final sizeMultiplier = i % 2 == 0 ? 1.1 : 1.0;
       final marker = _markers.firstWhere(
         (m) => m.markerId.value == markerId,
         orElse: () => throw Exception('Marker not found'),
@@ -184,6 +213,10 @@ class HotspotViewModel extends ChangeNotifier {
   }
 
   void onMapTap(LatLng position) {
+    // Reset nearby chargers mode when selecting a new location
+    if (_isNearbyChargersMode) {
+      toggleNearbyChargersMode(isEnabled: false);
+    }
     _selectedLocation = position;
     _markers.removeWhere((marker) => marker.markerId.value == 'selected');
     _circles.clear();
@@ -212,6 +245,9 @@ class HotspotViewModel extends ChangeNotifier {
     _radius = 5.0;
     _hotspotResponse = null;
     _showActionButtons = false;
+    _isNearbyChargersMode = false; // Reset toggle
+    _currentHotspot = null;
+    _nearbyChargersResponse = null;
     notifyListeners();
   }
 
@@ -270,16 +306,15 @@ class HotspotViewModel extends ChangeNotifier {
     }
     await Future.delayed(const Duration(seconds: 1));
     _isLoading = false;
-    // clearSelectionForAdjustRadius();
-    // await Future.delayed(const Duration(seconds: 1));
     notifyListeners();
+    await Future.delayed(const Duration(seconds: 1));
+    clearSelectionForAdjustRadius();
   }
 
   void applyFilters({
     Function(SuggestedHotspot)? onSuggestedTap,
     Function(ExistingCharger)? onExistingTap,
   }) async {
-    if (_hotspotResponse == null) return;
     final newMarkers = <Marker>{};
 
     Marker? selectedMarker;
@@ -294,65 +329,141 @@ class HotspotViewModel extends ChangeNotifier {
       newMarkers.add(selectedMarker);
     }
 
-    if (_showSuggested) {
-      for (var hotspot in _hotspotResponse!.suggested) {
-        final score = hotspot.totalWeight ?? 0;
-        final rating = hotspot.rating ?? 0;
-        if (hotspot.lat != null &&
-            hotspot.lng != null &&
-            score >= _scoreRange.start &&
-            score <= _scoreRange.end &&
-            rating >= _ratingRange.start &&
-            rating <= _ratingRange.end) {
-          final BitmapDescriptor customIcon =
-              await getCustomMarker(score, isCharger: false);
-          newMarkers.add(
-            Marker(
-              markerId: MarkerId('suggested_${hotspot.id}'),
-              position: LatLng(hotspot.lat!, hotspot.lng!),
-              infoWindow: InfoWindow(
-                title: hotspot.displayName,
-                snippet:
-                    'Score: ${hotspot.totalWeight ?? 'N/A'}, Rating: ${hotspot.rating ?? 'N/A'}',
-              ),
-              icon: customIcon,
-              onTap:
-                  onSuggestedTap != null ? () => onSuggestedTap(hotspot) : null,
+    if (_isNearbyChargersMode &&
+        _currentHotspot != null &&
+        _nearbyChargersResponse != null) {
+      // Show only the current hotspot
+      if (_currentHotspot!.lat != null && _currentHotspot!.lng != null) {
+        final score = _currentHotspot!.totalWeight ?? 0;
+        final BitmapDescriptor customIcon =
+            await getCustomMarker(score, isCharger: false);
+        newMarkers.add(
+          Marker(
+            markerId: MarkerId('suggested_${_currentHotspot!.id}'),
+            position: LatLng(_currentHotspot!.lat!, _currentHotspot!.lng!),
+            infoWindow: InfoWindow(
+              title: _currentHotspot!.displayName,
+              snippet:
+                  'Score: ${_currentHotspot!.totalWeight ?? 'N/A'}, Rating: ${_currentHotspot!.rating ?? 'N/A'}',
             ),
-          );
+            icon: customIcon,
+            onTap: onSuggestedTap != null
+                ? () => onSuggestedTap(_currentHotspot!)
+                : null,
+          ),
+        );
+      }
+
+      // Show nearby chargers with distance in tooltip
+      for (var destination in _nearbyChargersResponse!.destination) {
+        final BitmapDescriptor customIcon =
+            await getCustomMarker(0, isCharger: true);
+        newMarkers.add(
+          Marker(
+            markerId: MarkerId('nearby_${destination.id}'),
+            position: LatLng(destination.latitude, destination.longitude),
+            infoWindow: InfoWindow(
+              title: destination.locationName,
+              snippet:
+                  'Distance: ${destination.distance.toStringAsFixed(2)} km',
+            ),
+            icon: customIcon,
+            onTap: onExistingTap != null
+                ? () {
+                    // Find matching ExistingCharger
+                    final charger =
+                        _hotspotResponse?.existingCharger.firstWhere(
+                      (c) =>
+                          c.id == destination.id.replaceFirst('existing_', ''),
+                      orElse: () => ExistingCharger(
+                        name: destination.locationName,
+                        id: destination.id,
+                        displayName: destination.locationName,
+                        formattedAddress: 'Unknown',
+                        lat: destination.latitude,
+                        lng: destination.longitude,
+                        userRatingCount: 0,
+                        googleMapsUri: '',
+                        evChargeOptions: EVChargeOptions(
+                          connectorCount: 0,
+                          count: 0,
+                        ),
+                      ),
+                    );
+                    onExistingTap(charger!);
+                  }
+                : null,
+          ),
+        );
+      }
+    } else {
+      // Normal mode
+      if (_hotspotResponse == null) return;
+
+      if (_showSuggested) {
+        for (var hotspot in _hotspotResponse!.suggested) {
+          final score = hotspot.totalWeight ?? 0;
+          final rating = hotspot.rating ?? 0;
+          if (hotspot.lat != null &&
+              hotspot.lng != null &&
+              score >= _scoreRange.start &&
+              score <= _scoreRange.end &&
+              rating >= _ratingRange.start &&
+              rating <= _ratingRange.end) {
+            final BitmapDescriptor customIcon =
+                await getCustomMarker(score, isCharger: false);
+            newMarkers.add(
+              Marker(
+                markerId: MarkerId('suggested_${hotspot.id}'),
+                position: LatLng(hotspot.lat!, hotspot.lng!),
+                infoWindow: InfoWindow(
+                  title: hotspot.displayName,
+                  snippet:
+                      'Score: ${hotspot.totalWeight ?? 'N/A'}, Rating: ${hotspot.rating ?? 'N/A'}',
+                ),
+                icon: customIcon,
+                onTap: onSuggestedTap != null
+                    ? () => onSuggestedTap(hotspot)
+                    : null,
+              ),
+            );
+          }
+        }
+      }
+
+      if (_showExisting) {
+        for (var charger in _hotspotResponse!.existingCharger) {
+          final rating = charger.rating ?? 0;
+          if (charger.lat != null &&
+              charger.lng != null &&
+              rating >= _ratingRange.start &&
+              rating <= _ratingRange.end) {
+            final BitmapDescriptor customIcon =
+                await getCustomMarker(rating, isCharger: true);
+            newMarkers.add(
+              Marker(
+                markerId: MarkerId('existing_${charger.id}'),
+                position: LatLng(charger.lat!, charger.lng!),
+                infoWindow: InfoWindow(
+                  title: charger.displayName,
+                  snippet: 'Rating: ${charger.rating ?? 'N/A'}',
+                ),
+                icon: customIcon,
+                onTap:
+                    onExistingTap != null ? () => onExistingTap(charger) : null,
+              ),
+            );
+          }
         }
       }
     }
 
-    if (_showExisting) {
-      for (var charger in _hotspotResponse!.existingCharger) {
-        final rating = charger.rating ?? 0;
-        if (charger.lat != null &&
-            charger.lng != null &&
-            rating >= _ratingRange.start &&
-            rating <= _ratingRange.end) {
-          final BitmapDescriptor customIcon =
-              await getCustomMarker(rating, isCharger: true);
-          newMarkers.add(
-            Marker(
-              markerId: MarkerId('existing_${charger.id}'),
-              position: LatLng(charger.lat!, charger.lng!),
-              infoWindow: InfoWindow(
-                title: charger.displayName,
-                snippet: 'Rating: ${charger.rating ?? 'N/A'}',
-              ),
-              icon: customIcon,
-              onTap:
-                  onExistingTap != null ? () => onExistingTap(charger) : null,
-            ),
-          );
-        }
-      }
-    }
     _markers = newMarkers;
 
-    if (_selectedLocation != null) {
+    if (_selectedLocation != null && !_isNearbyChargersMode) {
       _updateRadiusCircle();
+    } else {
+      _circles.clear();
     }
     notifyListeners();
   }
@@ -363,9 +474,11 @@ class HotspotViewModel extends ChangeNotifier {
     required RangeValues scoreRange,
     required RangeValues ratingRange,
   }) {
-    _showSuggested = showSuggested;
+    if (!_isNearbyChargersMode) {
+      _showSuggested = showSuggested;
+      _scoreRange = scoreRange;
+    }
     _showExisting = showExisting;
-    _scoreRange = scoreRange;
     _ratingRange = ratingRange;
     applyFilters(
       onSuggestedTap: _onSuggestedTap,
@@ -374,22 +487,42 @@ class HotspotViewModel extends ChangeNotifier {
   }
 
   void toggleShowSuggested(bool value) {
-    _showSuggested = value;
+    if (!_isNearbyChargersMode) {
+      _showSuggested = value;
+      applyFilters(
+        onSuggestedTap: _onSuggestedTap,
+        onExistingTap: _onExistingTap,
+      );
+    }
     notifyListeners();
   }
 
   void toggleShowExisting(bool value) {
     _showExisting = value;
+    applyFilters(
+      onSuggestedTap: _onSuggestedTap,
+      onExistingTap: _onExistingTap,
+    );
     notifyListeners();
   }
 
   void updateScoreRange(RangeValues values) {
-    _scoreRange = values;
+    if (!_isNearbyChargersMode) {
+      _scoreRange = values;
+      applyFilters(
+        onSuggestedTap: _onSuggestedTap,
+        onExistingTap: _onExistingTap,
+      );
+    }
     notifyListeners();
   }
 
   void updateRatingRange(RangeValues values) {
     _ratingRange = values;
+    applyFilters(
+      onSuggestedTap: _onSuggestedTap,
+      onExistingTap: _onExistingTap,
+    );
     notifyListeners();
   }
 

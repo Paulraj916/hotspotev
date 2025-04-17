@@ -2,7 +2,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:hotspot/models/hotspot_model.dart';
-import 'package:hotspot/main.dart';
+import 'package:hotspot/theme/hotspot_theme.dart';
 
 class EVStationStackedBarChart extends StatelessWidget {
   final List<ExistingCharger> evStations;
@@ -20,7 +20,7 @@ class EVStationStackedBarChart extends StatelessWidget {
 
       brandConnectorCount.putIfAbsent(
         brand,
-        () => {'type 2': 0, 'ccs2': 0, 'chademo': 0, 'other': 0},
+        () => {'Type 2': 0, 'CCS2': 0, 'CHAdeMO': 0, 'Other': 0},
       );
       brandConnectorCount[brand]![connectorType] =
           (brandConnectorCount[brand]![connectorType] ?? 0) + 1;
@@ -37,16 +37,16 @@ class EVStationStackedBarChart extends StatelessWidget {
   }
 
   String _formatConnectorType(String? type) {
-    if (type == null) return 'other';
+    if (type == null) return 'Other';
     switch (type) {
       case 'EV_CONNECTOR_TYPE_TYPE_2':
-        return 'type 2';
+        return 'Type 2';
       case 'EV_CONNECTOR_TYPE_CCS_COMBO_2':
-        return 'ccs2';
+        return 'CCS2';
       case 'EV_CONNECTOR_TYPE_CHADEMO':
-        return 'chademo';
+        return 'CHAdeMO';
       default:
-        return 'other';
+        return 'Other';
     }
   }
 
@@ -62,10 +62,10 @@ class EVStationStackedBarChart extends StatelessWidget {
     }
 
     final connectorColors = {
-      'ccs2': Colors.green,
-      'chademo': Colors.orange,
-      'type 2': Colors.purple,
-      'other': Colors.blue,
+      'CCS2': Colors.green,
+      'CHAdeMO': Colors.orange,
+      'Type 2': Colors.purple,
+      'Other': Colors.blue,
     };
 
     return BarChart(

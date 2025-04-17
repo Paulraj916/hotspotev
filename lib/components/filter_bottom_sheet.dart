@@ -1,6 +1,5 @@
 // filter_bottom_sheet.dart
 import 'package:flutter/material.dart';
-
 import '../theme/hotspot_theme.dart';
 import '../viewmodels/hotspot_viewmodel.dart';
 
@@ -9,6 +8,7 @@ void showFilterBottomSheet(BuildContext context, HotspotViewModel viewModel) {
   bool tempShowExisting = viewModel.showExisting;
   RangeValues tempScoreRange = viewModel.scoreRange;
   RangeValues tempRatingRange = viewModel.ratingRange;
+  final isNearbyMode = viewModel.isNearbyChargersMode;
 
   showModalBottomSheet(
     context: context,
@@ -36,19 +36,22 @@ void showFilterBottomSheet(BuildContext context, HotspotViewModel viewModel) {
                   _buildCheckboxes(
                     tempShowSuggested: tempShowSuggested,
                     tempShowExisting: tempShowExisting,
-                    onSuggestedChanged: (value) =>
-                        setState(() => tempShowSuggested = value!),
-                    onExistingChanged: (value) =>
-                        setState(() => tempShowExisting = value!),
+                    isNearbyMode: isNearbyMode,
+                    onSuggestedChanged: isNearbyMode
+                        ? null
+                        : (value) => setState(() => tempShowSuggested = value!),
+                    onExistingChanged: (value) => setState(() => tempShowExisting = value!),
                   ),
                   _buildScoreRangeSlider(
                     tempScoreRange: tempScoreRange,
-                    onChanged: (values) => setState(() => tempScoreRange = values),
+                    isNearbyMode: isNearbyMode,
+                    onChanged: isNearbyMode
+                        ? null
+                        : (values) => setState(() => tempScoreRange = values),
                   ),
                   _buildRatingRangeSlider(
                     tempRatingRange: tempRatingRange,
-                    onChanged: (values) =>
-                        setState(() => tempRatingRange = values),
+                    onChanged: (values) => setState(() => tempRatingRange = values),
                   ),
                   const SizedBox(height: 16),
                   _buildApplyButton(
@@ -75,7 +78,7 @@ Widget _buildHeader(BuildContext context) {
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
       const Text(
-        'Filter Options',
+        'Filters',
         style: TextStyle(
           color: HotspotTheme.primaryColor,
           fontSize: 18,
@@ -93,23 +96,25 @@ Widget _buildHeader(BuildContext context) {
 Widget _buildCheckboxes({
   required bool tempShowSuggested,
   required bool tempShowExisting,
-  required ValueChanged<bool?> onSuggestedChanged,
+  required bool isNearbyMode,
+  required ValueChanged<bool?>? onSuggestedChanged,
   required ValueChanged<bool?> onExistingChanged,
 }) {
   return Column(
     children: [
       CheckboxListTile(
         title: const Text(
-          'Show Suggested Hotspots',
+          'Show Hotspots',
           style: TextStyle(color: HotspotTheme.buttonTextColor),
         ),
         value: tempShowSuggested,
         activeColor: HotspotTheme.accentColor,
         onChanged: onSuggestedChanged,
+        enabled: !isNearbyMode,
       ),
       CheckboxListTile(
         title: const Text(
-          'Show Existing Chargers',
+          'Show Local Chargers',
           style: TextStyle(color: HotspotTheme.buttonTextColor),
         ),
         value: tempShowExisting,
@@ -122,7 +127,8 @@ Widget _buildCheckboxes({
 
 Widget _buildScoreRangeSlider({
   required RangeValues tempScoreRange,
-  required ValueChanged<RangeValues> onChanged,
+  required bool isNearbyMode,
+  required ValueChanged<RangeValues>? onChanged,
 }) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -130,7 +136,7 @@ Widget _buildScoreRangeSlider({
       const Padding(
         padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
         child: Text(
-          'Score Range (0-10)',
+          'Hotspot Score (0-10)',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: HotspotTheme.backgroundColor,
@@ -159,11 +165,12 @@ Widget _buildScoreRangeSlider({
         max: 10,
         divisions: 10,
         activeColor: HotspotTheme.accentColor,
+        inactiveColor: isNearbyMode ? Colors.grey : null,
         labels: RangeLabels(
           tempScoreRange.start.toStringAsFixed(1),
           tempScoreRange.end.toStringAsFixed(1),
         ),
-        onChanged: onChanged,
+        onChanged: onChanged ?? (value) {},
       ),
     ],
   );
@@ -179,7 +186,7 @@ Widget _buildRatingRangeSlider({
       const Padding(
         padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
         child: Text(
-          'Rating Range (0-5)',
+          'Public Rating (0-5)',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: HotspotTheme.backgroundColor,
