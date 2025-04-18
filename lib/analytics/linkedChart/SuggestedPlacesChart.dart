@@ -35,7 +35,7 @@ class _SuggestedPlacesChartState extends State<SuggestedPlacesChart> {
     // Calculate appropriate width based on number of items
     final chartWidth = max((sortedSuggested.length + 1) * 50.0,
         MediaQuery.of(context).size.width - 64);
-    print("---------------$chartWidth");
+    // print("---------------$chartWidth");
     return SizedBox(
       height: 300,
       child: Container(

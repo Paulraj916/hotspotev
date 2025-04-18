@@ -56,12 +56,13 @@ class WeightVsRatingBarChart extends StatelessWidget {
                               ? words[1]
                                   .substring(0, words[1].length.clamp(0, 12))
                               : '';
-                          return '$firstWord\n$secondWord';
+                          // return '$firstWord\n$secondWord';
+                          return firstWord;
                         })(),
                         style: TextStyle(
                           fontSize: 12,
-                          color:
-                              HotspotTheme.backgroundColor, // Apply theme text color
+                          color: HotspotTheme
+                              .backgroundColor, // Apply theme text color
                         ),
                         textAlign: TextAlign.center,
                         overflow: TextOverflow.ellipsis,

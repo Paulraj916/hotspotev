@@ -43,7 +43,8 @@ class NearbyDistanceBarChart extends StatelessWidget {
                   final secondWord = words.length > 1
                       ? words[1].substring(0, words[1].length.clamp(0, 12))
                       : '';
-                  final label = '$firstWord\n$secondWord';
+                  // final label = '$firstWord\n$secondWord';
+                  final label = firstWord;
 
                   return Transform.rotate(
                     angle: -50 * 3.14159 / 180,
@@ -72,7 +73,7 @@ class NearbyDistanceBarChart extends StatelessWidget {
               showTitles: true,
               reservedSize: 40,
               getTitlesWidget: (value, meta) => Text(
-                (value/1000).toString(),
+                (value / 1000).toString(),
                 style: TextStyle(
                   color: HotspotTheme.backgroundColor, // Apply theme text color
                   fontSize: 12,
@@ -112,7 +113,7 @@ class NearbyDistanceBarChart extends StatelessWidget {
             getTooltipItem: (group, groupIndex, rod, rodIndex) {
               final station = sortedStations[group.x.toInt()];
               return BarTooltipItem(
-                '${station.displayName}\nDistance: ${((station.nearestChargeStationDetail!.first.distance)/1000).toStringAsFixed(2)} km',
+                '${station.displayName}\nDistance: ${((station.nearestChargeStationDetail!.first.distance) / 1000).toStringAsFixed(2)} km',
                 TextStyle(
                   color: HotspotTheme
                       .backgroundColor, // Contrast with tooltip background

@@ -69,7 +69,7 @@ class _MarkerDetailsContentState extends State<_MarkerDetailsContent> {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        color: HotspotTheme.textColor,
+        color: Color.fromARGB(255, 44, 44, 44),
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: SingleChildScrollView(

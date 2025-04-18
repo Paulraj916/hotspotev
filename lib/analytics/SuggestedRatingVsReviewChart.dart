@@ -22,7 +22,7 @@ class SuggestedRatingVsReviewChart extends StatelessWidget {
     //     : 5.0;
 
     final maxReviewCount = sortedSuggested.isNotEmpty
-        ? sortedSuggested.map((s) => s.userRatingCount ).reduce(max) + 1
+        ? sortedSuggested.map((s) => s.userRatingCount).reduce(max) + 1
         : 5.0;
 
     return SizedBox(
@@ -46,7 +46,8 @@ class SuggestedRatingVsReviewChart extends StatelessWidget {
                 getTitlesWidget: (value, meta) => Text(
                   value.toString(),
                   style: TextStyle(
-                    color: HotspotTheme.backgroundColor, // Apply theme text color
+                    color:
+                        HotspotTheme.backgroundColor, // Apply theme text color
                     fontSize: 12,
                   ),
                 ),
@@ -65,7 +66,8 @@ class SuggestedRatingVsReviewChart extends StatelessWidget {
                       final secondWord = words.length > 1
                           ? words[1].substring(0, words[1].length.clamp(0, 12))
                           : '';
-                      return '$firstWord\n$secondWord';
+                      // return '$firstWord\n$secondWord';
+                      return firstWord;
                     })();
                     return Transform.rotate(
                       angle: -30 * 3.14159 / 180,
@@ -99,10 +101,9 @@ class SuggestedRatingVsReviewChart extends StatelessWidget {
           barGroups: sortedSuggested.asMap().entries.map((entry) {
             final station = entry.value;
 
-            final normalizedReviewCount =
-                station.userRatingCount > 0
-                    ? min((station.userRatingCount / maxReviewCount) * 5, 5.0)
-                    : 0.0;
+            final normalizedReviewCount = station.userRatingCount > 0
+                ? min((station.userRatingCount / maxReviewCount) * 5, 5.0)
+                : 0.0;
 
             return BarChartGroupData(
               x: entry.key,
@@ -134,7 +135,7 @@ class SuggestedRatingVsReviewChart extends StatelessWidget {
                     rodIndex == 0 ? 'Rating' : 'Review Count';
                 final dynamic value = rodIndex == 0
                     ? (station.rating ?? 'N/A')
-                    : (station.userRatingCount );
+                    : (station.userRatingCount);
 
                 return BarTooltipItem(
                   '${station.displayName}\n$metricName: $value',

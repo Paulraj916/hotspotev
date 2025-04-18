@@ -79,7 +79,8 @@ class ConnectorTypeBatteryPowerBarChart extends StatelessWidget {
                               ? words[1]
                                   .substring(0, words[1].length.clamp(0, 12))
                               : '';
-                          return '$firstWord\n$secondWord';
+                          // return '$firstWord\n$secondWord';
+                          return firstWord;
                         })(),
                         style: TextStyle(
                           fontSize: 12,

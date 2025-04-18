@@ -46,7 +46,8 @@ class RatingBarChartSuggested extends StatelessWidget {
                   final secondWord = words.length > 1
                       ? words[1].substring(0, words[1].length.clamp(0, 12))
                       : '';
-                  final label = '$firstWord\n$secondWord';
+                  // final label = '$firstWord\n$secondWord';
+                  final label = firstWord;
 
                   return Transform.rotate(
                     angle: -45 * 3.14159 / 180,
