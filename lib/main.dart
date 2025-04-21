@@ -7,8 +7,13 @@ import 'api_client/api_client.dart';
 import 'screens/splash_screen.dart';
 import 'viewmodels/nearby_chargers_viewmodel.dart'; // Import new view model
 import 'repository/nearby_chargers_repository.dart'; // Import new repository
+import 'package:mixpanel_flutter/mixpanel_flutter.dart';
 
-void main() {
+late Mixpanel mixpanel;
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  mixpanel = await Mixpanel.init("a780ff7d36c94bfeabaf06e80c040049", trackAutomaticEvents: false);
   runApp(
     MultiProvider(
       providers: [

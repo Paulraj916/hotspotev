@@ -1,6 +1,8 @@
 // hotspot_view.dart
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:hotspot/helper/analytics_helper.dart';
+import 'package:hotspot/main.dart';
 import 'package:hotspot/theme/hotspot_theme.dart';
 import 'package:hotspot/models/nearby_chargers_model.dart';
 import 'package:provider/provider.dart';
@@ -41,10 +43,14 @@ class _HotspotMapScreenState extends State<HotspotMapScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final viewModel = context.read<HotspotViewModel>();
       viewModel.setTapCallbacks(
-        onSuggestedTap: (hotspot) => showMarkerDetailsBottomSheet(
-          context: context,
-          hotspot: hotspot,
-        ),
+        onSuggestedTap: (hotspot) {
+          showMarkerDetailsBottomSheet(
+            context: context,
+            hotspot: hotspot,
+          );
+          AnalyticsHelper.logEvent('Hotspot Marker Clicked',
+              {'place id': hotspot.id, 'place name': hotspot.displayName});
+        },
         onExistingTap: (charger) {
           final isNearbyMode = viewModel.isNearbyChargersMode;
           double? distance;
@@ -65,6 +71,8 @@ class _HotspotMapScreenState extends State<HotspotMapScreen>
             distance = destination.distance;
             sourceHotspotName = viewModel.currentHotspot?.displayName;
           }
+          AnalyticsHelper.logEvent('Charger Marker Clicked',
+              {'Charger id': charger.id, 'charger name': charger.displayName});
           showMarkerDetailsBottomSheet(
             context: context,
             charger: charger,
@@ -121,6 +129,10 @@ class _HotspotMapScreenState extends State<HotspotMapScreen>
       controller?.animateCamera(
         CameraUpdate.newLatLngZoom(viewModel.selectedLocation!, 12),
       );
+      AnalyticsHelper.logEvent('Searched Place', {
+        'Latitude': viewModel.selectedLocation?.latitude,
+        'longitude': viewModel.selectedLocation?.longitude
+      });
       setState(() {
         _searchController.clear();
         _placeSuggestions = [];
@@ -142,6 +154,9 @@ class _HotspotMapScreenState extends State<HotspotMapScreen>
   Future<void> _logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isLoggedIn', false);
+    AnalyticsHelper.logEvent('user $_getUserEmail is logged out',{
+    });
+    mixpanel.reset();
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -227,7 +242,7 @@ class _HotspotMapScreenState extends State<HotspotMapScreen>
                     child: GestureDetector(
                       onTap: () {
                         _logout();
-                        
+
                         Navigator.pop(context);
                       },
                       child: AnimatedContainer(
@@ -356,6 +371,10 @@ class _HotspotMapScreenState extends State<HotspotMapScreen>
                       mini: true,
                       backgroundColor: HotspotTheme.textColor,
                       onPressed: () {
+                        AnalyticsHelper.logEvent("Analytics Button Clicked",{
+                          'button_name': 'Analytics button',
+                          'screen': 'Analytics Screen',
+                        });
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -629,22 +648,21 @@ class _HotspotMapScreenState extends State<HotspotMapScreen>
                       style: TextStyle(color: HotspotTheme.buttonTextColor)),
                   Expanded(
                     child: SliderTheme(
-  data: SliderTheme.of(context).copyWith(
-    valueIndicatorTextStyle: const TextStyle(
-      color: HotspotTheme.textColor, // <-- Label text color
-    ),
-  ),
-  child: Slider(
-    value: viewModel.radius,
-    min: 1.0,
-    max: 50.0,
-    divisions: 49,
-    label: '${viewModel.radius.toStringAsFixed(1)} km',
-    activeColor: HotspotTheme.accentColor,
-    onChanged: viewModel.updateRadius,
-  ),
-),
-
+                      data: SliderTheme.of(context).copyWith(
+                        valueIndicatorTextStyle: const TextStyle(
+                          color: HotspotTheme.textColor, // <-- Label text color
+                        ),
+                      ),
+                      child: Slider(
+                        value: viewModel.radius,
+                        min: 1.0,
+                        max: 50.0,
+                        divisions: 49,
+                        label: '${viewModel.radius.toStringAsFixed(1)} km',
+                        activeColor: HotspotTheme.accentColor,
+                        onChanged: viewModel.updateRadius,
+                      ),
+                    ),
                   ),
                   const Text('50 km',
                       style: TextStyle(color: HotspotTheme.buttonTextColor)),

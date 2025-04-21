@@ -4,6 +4,7 @@ import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:hotspot/helper/analytics_helper.dart';
 import 'package:hotspot/main.dart';
 import 'package:hotspot/theme/hotspot_theme.dart';
 import '../models/hotspot_model.dart';
@@ -275,6 +276,10 @@ class HotspotViewModel extends ChangeNotifier {
   }
 
   Future<void> fetchHotspots() async {
+    AnalyticsHelper.logEvent('Generate Button Clicked',{
+      'button_name': 'Generate Button',
+      'screen': 'Home Screen',
+    });
     if (_selectedLocation == null) return;
 
     _isLoading = true;
