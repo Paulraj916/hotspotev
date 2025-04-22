@@ -48,6 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
         }
 
         print('Navigating to HotspotMapScreen...');
+        
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const HotspotMapScreen()),
