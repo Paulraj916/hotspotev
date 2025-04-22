@@ -53,7 +53,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
         mixpanel.identify(email);
         mixpanel.getPeople().set("Email", email);
-        AnalyticsHelper.logEvent('User $email looged in', {
+        AnalyticsHelper.logEvent('User $email logged in', {
           'button_name': 'Generate Button',
           'screen': 'Home Screen',
         });
