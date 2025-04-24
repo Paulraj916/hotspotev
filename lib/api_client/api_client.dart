@@ -1,6 +1,7 @@
 // api_client.dart
 import 'dart:convert';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:hotspot/analytics_helper/useranalytics.dart';
 import 'package:http/http.dart' as http;
 import '../models/hotspot_model.dart';
 import '../models/nearby_chargers_model.dart'; // Import the new model
@@ -16,8 +17,15 @@ class ApiClient {
       url,
       headers: {'Content-Type': 'application/json'},
     );
-
+    AnalyticsHelper.logEvent('API Request for Generate', {
+      'origin': url.origin,
+      'method': 'GET',
+      'path': url.path,
+      'query': url.query
+    });
     if (response.statusCode == 200) {
+      AnalyticsHelper.logEvent('API Response for Generate',
+          {'status_code': response.statusCode, 'response': response.body});
       final Map<String, dynamic> data = jsonDecode(response.body);
       return HotspotResponse.fromJson(data);
     } else {

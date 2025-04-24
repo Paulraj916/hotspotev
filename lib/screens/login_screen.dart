@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hotspot/analytics_helper/useranalytics.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'hotspot_view.dart';
 import 'package:hotspot/theme/hotspot_theme.dart';
@@ -48,7 +49,10 @@ class _LoginScreenState extends State<LoginScreen> {
         }
 
         print('Navigating to HotspotMapScreen...');
-        
+        identifyUser(email);
+        await AnalyticsHelper.logEvent('User Login', {
+          'email': email,
+        });
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const HotspotMapScreen()),

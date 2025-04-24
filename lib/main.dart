@@ -1,6 +1,6 @@
 // main.dart
 import 'package:flutter/material.dart';
-import 'package:hotspot/helper/useranalytics.dart';
+import 'package:hotspot/analytics_helper/useranalytics.dart';
 import 'package:provider/provider.dart';
 import 'viewmodels/hotspot_viewmodel.dart';
 import 'repository/hotspot_repository.dart';
@@ -10,7 +10,8 @@ import 'viewmodels/nearby_chargers_viewmodel.dart'; // Import new view model
 import 'repository/nearby_chargers_repository.dart'; // Import new repository
 
 void main() async {
-  await UserAnalytics.initialize();
+  WidgetsFlutterBinding.ensureInitialized();
+  await AnalyticsHelper.initialize();
   runApp(
     MultiProvider(
       providers: [
